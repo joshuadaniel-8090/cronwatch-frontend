@@ -1,0 +1,6 @@
+{
+  "name": "Cronwatch",
+  "description": "SaaS developer tool that monitors cron jobs and background tasks with instant alerts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
