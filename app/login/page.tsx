@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Layout, Mail, Lock, Loader2 } from "lucide-react";
 import api from "../../src/lib/api";
+import { supabase } from "../../src/lib/supabase";
 import { useAuthStore } from "../../src/store/useAuthStore";
 
 export default function LoginPage() {
@@ -32,8 +33,16 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/auth/google`;
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) {
+      setError(error.message);
+    }
   };
 
   return (
