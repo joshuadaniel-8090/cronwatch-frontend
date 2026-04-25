@@ -2,7 +2,6 @@
 import { create } from "zustand";
 import { User } from "../types";
 import api from "../lib/api";
-import { supabase } from "../lib/supabase";
 
 interface AuthState {
   user: User | null;
@@ -19,16 +18,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
   setUser: (user) => set({ user, isAuthenticated: !!user, isLoading: false }),
   fetchUser: async () => {
-    let token = localStorage.getItem("access_token");
+    const token = localStorage.getItem("access_token");
     
-    if (!token) {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        token = data.session.access_token;
-        localStorage.setItem("access_token", token);
-      }
-    }
-
     if (!token) {
       set({ user: null, isAuthenticated: false, isLoading: false });
       return;
@@ -42,8 +33,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
-  logout: async () => {
-    await supabase.auth.signOut();
+  logout: () => {
     localStorage.removeItem("access_token");
     set({ user: null, isAuthenticated: false, isLoading: false });
     window.location.href = "/login";
