@@ -135,6 +135,13 @@ export const Sidebar: React.FC = () => {
             isCollapsed && "md:opacity-0 md:w-0"
           )}>Logout</span>
         </button>
+
+        <div className={cn(
+          "mt-4 px-3 text-[10px] text-brand-muted font-medium uppercase tracking-widest opacity-40 transition-all",
+          isCollapsed && "md:opacity-0 md:w-0"
+        )}>
+          v0.0.12
+        </div>
       </div>
     </>
   );
