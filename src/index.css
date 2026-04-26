@@ -6,27 +6,37 @@
   --color-brand-primary: #7C3AED;
   --color-brand-success: #10B981;
   --color-brand-error: #EF4444;
-  --color-brand-muted: #94A3B8;
-  --color-bg-base: #0F0F0F;
-  --color-bg-surface: #1A1A1A;
-  --color-bg-header: #151515;
-  --color-border-card: #2A2A2A;
-  --color-text-muted: #94A3B8;
+  --color-brand-muted: #6B7280;
+  --color-bg-base: #0A0A0A;
+  --color-bg-surface: #111111;
+  --color-bg-header: #111111;
+  --color-border-card: #1F1F1F;
+  --color-text-primary: #F5F5F5;
+  --color-text-muted: #6B7280;
 }
 
 :root {
-  background-color: #0F0F0F;
+  background-color: #0A0A0A;
   color-scheme: dark;
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: #0F0F0F;
-  color: white;
+  background-color: #0A0A0A;
+  color: #F5F5F5;
 }
 
 @layer base {
   * {
-    @apply border-[#2A2A2A];
+    @apply border-[#1F1F1F];
   }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

@@ -10,28 +10,31 @@ interface StatusBadgeProps {
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
   const config = {
     healthy: {
-      dot: "bg-green-500",
+      bg: "bg-brand-success/10",
+      dot: "bg-brand-success",
       text: "Healthy",
-      color: "text-green-500",
+      color: "text-brand-success",
     },
     failing: {
-      dot: "bg-red-500",
+      bg: "bg-brand-error/10",
+      dot: "bg-brand-error",
       text: "Failing",
-      color: "text-red-500",
+      color: "text-brand-error",
     },
     waiting: {
-      dot: "bg-gray-500",
+      bg: "bg-white/5",
+      dot: "bg-brand-muted",
       text: "Waiting",
-      color: "text-gray-500",
+      color: "text-brand-muted",
     },
   };
 
-  const { dot, text, color } = config[status];
+  const { bg, dot, text, color } = config[status];
 
   return (
-    <div className="flex items-center gap-2">
-      <span className={cn("inline-block w-2.5 h-2.5 rounded-full", dot)} />
-      <span className={cn("text-sm font-medium", color)}>{text}</span>
+    <div className={cn("px-3 py-1 rounded-full flex items-center gap-2 border border-transparent shadow-sm", bg)}>
+      <span className={cn("w-1.5 h-1.5 rounded-full", dot)} />
+      <span className={cn("text-[11px] font-bold uppercase tracking-wider", color)}>{text}</span>
     </div>
   );
 };

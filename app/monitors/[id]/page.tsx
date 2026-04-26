@@ -57,46 +57,57 @@ export default function MonitorDetailPage() {
   if (authLoading || isLoading) return <div className="min-h-screen bg-bg-base flex"><Sidebar /><LoadingSpinner /></div>;
   if (!monitor) return <div className="min-h-screen bg-bg-base flex"><Sidebar /><div className="p-8 text-white">Monitor not found</div></div>;
 
-  const pingUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/ping/${monitor.token}`;
+  const pingUrl = `${process.env.NEXT_PUBLIC_API_URL}/ping/${monitor.token}`;
 
   return (
-    <div className="min-h-screen bg-bg-base flex overflow-hidden">
+    <div className="min-h-screen bg-[#0A0A0A] flex overflow-hidden font-sans text-[#F5F5F5]">
       <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 border-b border-border-card bg-bg-surface px-8 flex items-center shrink-0">
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header className="h-20 border-b border-[#1F1F1F] px-8 flex items-center shrink-0 bg-[#0A0A0A]/80 backdrop-blur-md sticky top-0 z-40">
           <button
             onClick={() => router.push("/dashboard")}
-            className="flex items-center gap-2 text-sm text-text-muted hover:text-white mr-6 transition-colors"
+            className="flex items-center gap-2 text-sm text-brand-muted hover:text-white mr-6 transition-colors group"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            <span>Back to Dashboard</span>
           </button>
-          <h1 className="text-lg font-semibold text-white">Monitor Details</h1>
+          <div className="h-8 w-px bg-[#1F1F1F] mr-6" />
+          <h1 className="text-xl font-bold tracking-tight">Monitor Settings</h1>
         </header>
 
-        <div className="p-8 flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto">
+        <div className="p-8 flex-1">
+          <div className="max-w-[1200px] mx-auto w-full">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
               <div>
-                <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center gap-4 mb-2">
                   <h2 className="text-3xl font-bold text-white tracking-tight">{monitor.name}</h2>
-                  <StatusBadge status={monitor.status} />
+                  <div className="relative">
+                    <StatusBadge status={monitor.status} />
+                    {monitor.status === "failing" && (
+                      <div className="absolute inset-0 bg-brand-error rounded-full animate-ping opacity-20" />
+                    )}
+                  </div>
                 </div>
-                <p className="text-brand-muted text-sm font-mono uppercase tracking-tighter">
-                  slug: {monitor.slug} • created {format(new Date(monitor.created_at), "MMM d, yyyy")}
-                </p>
+                <div className="flex items-center gap-3 text-sm text-brand-muted font-mono">
+                  <span className="opacity-50 uppercase tracking-widest text-[10px] font-bold">ID:</span>
+                  <span className="bg-white/5 px-2 py-0.5 rounded italic">{monitor.id}</span>
+                  <span className="opacity-30">•</span>
+                  <span className="opacity-50 uppercase tracking-widest text-[10px] font-bold">created:</span>
+                  <span>{format(new Date(monitor.created_at), "MMM d, yyyy")}</span>
+                </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => {}} // TODO: Edit modal
-                  className="flex items-center gap-2 px-4 py-2 bg-bg-surface border border-border-card hover:border-text-muted text-text-muted hover:text-white rounded-md text-sm font-medium transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-[#111111] border border-[#1F1F1F] hover:border-brand-primary/50 text-[#F5F5F5] rounded-xl text-sm font-bold transition-all shadow-lg shadow-black/20"
                 >
                   <Edit3 className="w-4 h-4" />
-                  <span>Edit</span>
+                  <span>Edit Configuration</span>
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="flex items-center gap-2 px-4 py-2 bg-brand-error/10 border border-brand-error/20 hover:bg-brand-error text-brand-error hover:text-white rounded-md text-sm font-medium transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-brand-error/10 border border-brand-error/20 hover:bg-brand-error text-brand-error hover:text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-brand-error/10"
                 >
                   <Trash2 className="w-4 h-4" />
                   <span>Delete</span>
@@ -104,79 +115,79 @@ export default function MonitorDetailPage() {
               </div>
             </header>
 
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+              <div className="p-6 bg-[#111111] border border-[#1F1F1F] rounded-2xl group hover:border-[#2F2F2F] transition-all">
+                <div className="flex items-center gap-3 text-brand-muted mb-3">
+                  <Clock className="w-4 h-4 opacity-50" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-brand-muted">Expected Every</span>
+                </div>
+                <div className="text-2xl font-bold text-white tracking-tight">{formatInterval(monitor.interval_seconds)}</div>
+              </div>
+              <div className="p-6 bg-[#111111] border border-[#1F1F1F] rounded-2xl group hover:border-[#2F2F2F] transition-all">
+                <div className="flex items-center gap-3 text-brand-muted mb-3">
+                  <BarChart3 className="w-4 h-4 opacity-50" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-brand-muted">Last Active</span>
+                </div>
+                <div className="text-2xl font-bold text-white tracking-tight">{timeAgo(monitor.last_ping_at)}</div>
+              </div>
+              <div className="p-6 bg-[#111111] border border-[#1F1F1F] rounded-2xl group hover:border-[#2F2F2F] transition-all">
+                <div className="flex items-center gap-3 text-brand-muted mb-3">
+                  <Calendar className="w-4 h-4 opacity-50" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-brand-muted">Grace Period</span>
+                </div>
+                <div className="text-2xl font-bold text-white tracking-tight">{monitor.grace_seconds / 60}m extra</div>
+              </div>
+            </div>
+
             <div className="grid lg:grid-cols-3 gap-8 mb-10">
               <div className="lg:col-span-2 space-y-8">
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  <div className="p-6 bg-bg-surface border border-border-card rounded-xl shadow-sm">
-                    <div className="flex items-center gap-3 text-brand-muted mb-2">
-                      <Clock className="w-4 h-4" />
-                      <span className="text-xs font-semibold uppercase tracking-wider">Expected Every</span>
-                    </div>
-                    <div className="text-xl font-bold text-white">{formatInterval(monitor.interval_seconds)}</div>
-                  </div>
-                  <div className="p-6 bg-bg-surface border border-border-card rounded-xl shadow-sm">
-                    <div className="flex items-center gap-3 text-brand-muted mb-2">
-                      <BarChart3 className="w-4 h-4" />
-                      <span className="text-xs font-semibold uppercase tracking-wider">Last Ping</span>
-                    </div>
-                    <div className="text-xl font-bold text-white uppercase">{timeAgo(monitor.last_ping_at)}</div>
-                  </div>
-                  <div className="p-6 bg-bg-surface border border-border-card rounded-xl shadow-sm">
-                    <div className="flex items-center gap-3 text-brand-muted mb-2">
-                      <Calendar className="w-4 h-4" />
-                      <span className="text-xs font-semibold uppercase tracking-wider">Grace Period</span>
-                    </div>
-                    <div className="text-xl font-bold text-white">{monitor.grace_seconds / 60}m extra</div>
-                  </div>
-                </div>
-
                 {/* Ping URL Section */}
-                <div className="bg-bg-surface border border-brand-primary/20 rounded-xl p-6 shadow-sm overflow-hidden">
-                  <div className="flex items-center gap-2 text-brand-primary font-semibold mb-4">
+                <div className="bg-[#111111] border border-brand-primary/20 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/5 blur-3xl -mr-16 -mt-16" />
+                  <div className="flex items-center gap-3 text-brand-primary font-bold mb-4">
                     <Terminal className="w-5 h-5" />
-                    <h2>Integration Guide</h2>
+                    <h2 className="tracking-tight">Integration URL</h2>
                   </div>
-                  <p className="text-sm text-text-muted mb-4">Add this curl command to your cron job to start monitoring.</p>
-                  <div className="relative group">
-                    <pre className="bg-bg-base p-4 rounded-lg border border-border-card text-brand-muted text-sm overflow-x-auto font-mono">
+                  <p className="text-sm text-brand-muted mb-6">Send an HTTP GET or POST request to this URL to reset the timer. Add it to the end of your script.</p>
+                  <div className="relative group/copy">
+                    <div className="bg-[#0A0A0A] p-4 rounded-xl border border-[#1F1F1F] text-brand-muted text-sm overflow-x-auto font-mono scrollbar-hide">
                       curl -fsS {pingUrl}
-                    </pre>
-                    <CopyButton text={`curl -fsS ${pingUrl}`} className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <CopyButton text={`curl -fsS ${pingUrl}`} className="absolute top-3 right-3 opacity-0 group-hover/copy:opacity-100 transition-all bg-brand-primary text-white p-1.5 rounded-lg shadow-lg" />
                   </div>
                 </div>
 
                 {/* History */}
                 <div>
-                  <h2 className="text-xl font-bold text-white mb-4">Ping History</h2>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold text-white tracking-tight">Recent Activity</h2>
+                    <span className="text-[10px] uppercase font-bold text-brand-muted bg-white/5 px-2 py-1 rounded">Last 50 Pings</span>
+                  </div>
                   <PingHistoryTable pings={pings} />
                 </div>
               </div>
 
               <div className="space-y-6">
-                <div className="p-6 bg-bg-surface border border-border-card rounded-xl shadow-sm">
-                  <h3 className="text-lg font-bold text-white mb-4">Alert Setup</h3>
-                  <p className="text-sm text-text-muted mb-4">
-                    Make sure you have configured your alert channels in settings to receive notifications.
+                <div className="p-6 bg-[#111111] border border-[#1F1F1F] rounded-2xl shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-2 h-full bg-brand-primary opacity-20" />
+                  <h3 className="text-lg font-bold text-white mb-3">Notifications</h3>
+                  <p className="text-sm text-brand-muted mb-6 leading-relaxed">
+                    Recipients configured in your alert channels will be notified if this monitor enters a failing state.
                   </p>
                   <button
                     onClick={() => router.push("/settings")}
-                    className="w-full py-2 bg-border-card hover:bg-[#3A3A3A] text-white rounded-lg text-sm font-medium transition-colors"
+                    className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-sm font-bold transition-all border border-white/5"
                   >
-                    Go to Settings
+                    Manage Channels
                   </button>
                 </div>
 
-                <div className="p-6 bg-bg-surface border border-border-card rounded-xl shadow-sm">
-                  <h3 className="text-lg font-bold text-white mb-4">Internal Details</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <span className="text-xs text-brand-muted uppercase font-bold tracking-widest">Monitor ID</span>
-                      <div className="text-sm text-text-muted font-mono mt-1 break-all">{monitor.id}</div>
-                    </div>
-                    <div>
-                      <span className="text-xs text-brand-muted uppercase font-bold tracking-widest">Ping Token</span>
-                      <div className="text-sm text-text-muted font-mono mt-1 select-all">{monitor.token}</div>
+                <div className="p-6 bg-[#111111] border border-[#1F1F1F] rounded-2xl shadow-sm">
+                  <h3 className="text-lg font-bold text-white mb-4">Connection Details</h3>
+                  <div className="space-y-5">
+                    <div className="group/item">
+                      <span className="text-[10px] text-brand-muted uppercase font-bold tracking-widest block mb-1">Public Token</span>
+                      <div className="text-xs text-brand-muted font-mono bg-[#0A0A0A] p-2 rounded border border-[#1F1F1F] break-all group-hover:text-white transition-colors">{monitor.token}</div>
                     </div>
                   </div>
                 </div>
