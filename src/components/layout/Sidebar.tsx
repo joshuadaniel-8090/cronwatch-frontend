@@ -8,14 +8,17 @@ import {
   LogOut, 
   ChevronLeft, 
   ChevronRight,
-  Radar
+  Radar,
+  Menu,
+  X
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAuthStore } from "../../store/useAuthStore";
+import { AnimatePresence, motion } from "motion/react";
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: Home, path: "/dashboard" },
-  { label: "Monitors", icon: Radio, path: "/dashboard" }, // Using dashboard as base for monitors list for now
+  { label: "Monitors", icon: Radio, path: "/monitors" },
   { label: "Settings", icon: Settings, path: "/settings" },
 ];
 
@@ -23,16 +26,17 @@ export const Sidebar: React.FC = () => {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  return (
-    <aside 
-      className={cn(
-        "h-screen sticky top-0 bg-[#111111] border-r border-[#1F1F1F] flex flex-col transition-all duration-300 z-50 shrink-0",
-        isCollapsed ? "w-20" : "w-[240px]"
-      )}
-    >
+  const getInitials = (email: string | undefined) => {
+    if (!email) return "U";
+    return email.charAt(0).toUpperCase();
+  };
+
+  const navContent = (
+    <>
       {/* Logo */}
-      <div className="h-20 flex items-center px-6 mb-4 relative">
+      <div className="h-20 flex items-center px-6 mb-4 relative shrink-0">
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="w-9 h-9 bg-brand-primary rounded-xl flex items-center justify-center shadow-lg shadow-brand-primary/20">
@@ -40,17 +44,26 @@ export const Sidebar: React.FC = () => {
             </div>
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-brand-primary rounded-full animate-pulse border-2 border-[#111111]" />
           </div>
-          {!isCollapsed && (
-            <span className="text-xl font-bold text-white tracking-tight">Cronwatch</span>
-          )}
+          <span className={cn(
+            "text-xl font-bold text-white tracking-tight transition-all",
+            isCollapsed && "md:opacity-0 md:w-0"
+          )}>Cronwatch</span>
         </div>
         
-        {/* Collapse Toggle */}
+        {/* Collapse Toggle - Only visible on desktop */}
         <button 
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-6 w-6 h-6 bg-[#1F1F1F] border border-[#2F2F2F] rounded-full flex items-center justify-center text-brand-muted hover:text-white transition-colors"
+          className="absolute -right-3 top-6 w-6 h-6 bg-[#1F1F1F] border border-[#2F2F2F] rounded-full hidden md:flex items-center justify-center text-brand-muted hover:text-white transition-colors z-50"
         >
           {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+        </button>
+
+        {/* Mobile Close Button */}
+        <button 
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="md:hidden ml-auto p-2 text-brand-muted hover:text-white"
+        >
+          <X className="w-6 h-6" />
         </button>
       </div>
 
@@ -58,12 +71,13 @@ export const Sidebar: React.FC = () => {
       <nav className="flex-1 px-3 space-y-1">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.path || (item.label === "Monitors" && pathname.startsWith("/monitors"));
+          const isActive = pathname === item.path || (item.path !== "/" && pathname.startsWith(item.path));
           
           return (
             <Link
               key={item.label}
               href={item.path}
+              onClick={() => setIsMobileMenuOpen(false)}
               className={cn(
                 "group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all relative overflow-hidden",
                 isActive 
@@ -75,42 +89,107 @@ export const Sidebar: React.FC = () => {
                 "w-5 h-5 shrink-0 transition-colors",
                 isActive ? "text-brand-primary" : "text-brand-muted group-hover:text-white"
               )} />
-              {!isCollapsed && <span>{item.label}</span>}
+              <span className={cn(
+                "transition-all",
+                isCollapsed && "md:opacity-0 md:w-0"
+              )}>{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
       {/* User / Logout */}
-      <div className="p-4 border-t border-[#1F1F1F]">
+      <div className="p-4 border-t border-[#1F1F1F] shrink-0">
         <div className={cn(
-          "flex items-center gap-3 p-2 rounded-xl bg-white/5 mb-3 overflow-hidden",
-          isCollapsed ? "justify-center" : ""
+          "flex items-center gap-3 p-2 rounded-xl bg-white/3 mb-3 overflow-hidden transition-all",
+          isCollapsed ? "md:justify-center" : ""
         )}>
-          <div className="w-8 h-8 rounded-full bg-brand-primary/10 flex items-center justify-center shrink-0">
-            <span className="text-xs font-bold text-brand-primary">
-              {user?.email?.charAt(0).toUpperCase() || "U"}
+          <div className="w-9 h-9 rounded-full bg-brand-primary flex items-center justify-center shrink-0 shadow-lg shadow-brand-primary/10">
+            <span className="text-sm font-bold text-white">
+              {getInitials(user?.email)}
             </span>
           </div>
-          {!isCollapsed && (
-            <div className="flex flex-col min-w-0">
-              <span className="text-xs font-semibold text-white truncate">{user?.email?.split('@')[0]}</span>
-              <span className="text-[10px] text-brand-muted truncate">{user?.email}</span>
-            </div>
-          )}
+          <div className={cn(
+            "flex flex-col min-w-0 transition-all",
+            isCollapsed && "md:opacity-0 md:w-0"
+          )}>
+            <span className="text-xs font-semibold text-white truncate">
+              {user?.email?.split('@')[0]}
+            </span>
+            <span className="text-[10px] text-brand-muted truncate block max-w-[140px]">
+              {user?.email}
+            </span>
+          </div>
         </div>
         
         <button
           onClick={logout}
           className={cn(
             "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-brand-muted hover:text-brand-error hover:bg-brand-error/5 rounded-lg transition-all",
-            isCollapsed ? "justify-center" : ""
+            isCollapsed ? "md:justify-center" : ""
           )}
         >
           <LogOut className="w-5 h-5 shrink-0" />
-          {!isCollapsed && <span>Logout</span>}
+          <span className={cn(
+            "transition-all",
+            isCollapsed && "md:opacity-0 md:w-0"
+          )}>Logout</span>
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile Top Bar */}
+      <div className="md:hidden h-16 border-b border-[#1F1F1F] bg-[#111111]/80 backdrop-blur-md fixed top-0 left-0 right-0 z-[60] flex items-center justify-between px-6">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-brand-primary rounded-lg flex items-center justify-center">
+            <Radar className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-bold text-white">Cronwatch</span>
+        </div>
+        <button 
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="p-2 text-brand-muted hover:text-white"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] md:hidden"
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 left-0 w-[280px] bg-[#111111] border-r border-[#1F1F1F] z-[80] md:hidden flex flex-col"
+            >
+              {navContent}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Desktop Sidebar */}
+      <aside 
+        className={cn(
+          "h-screen sticky top-0 bg-[#111111] border-r border-[#1F1F1F] hidden md:flex flex-col transition-all duration-300 z-50 shrink-0 overflow-hidden",
+          isCollapsed ? "w-20" : "w-[240px]"
+        )}
+      >
+        {navContent}
+      </aside>
+    </>
   );
 };

@@ -10,51 +10,60 @@ import {
   Zap,
   Search,
   PlusCircle,
-  Radar
+  Radar,
+  History
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { useAuth } from "../../src/hooks/useAuth";
 import { Sidebar } from "../../src/components/layout/Sidebar";
 import { LoadingSpinner } from "../../src/components/shared/LoadingSpinner";
 import { MonitorTable } from "../../src/components/monitors/MonitorTable";
-import { NewMonitorSlideOver } from "../../src/components/monitors/NewMonitorSlideOver";
+import { NewMonitorSlideOver as MonitorModal } from "../../src/components/monitors/NewMonitorSlideOver";
 import { Monitor } from "../../src/types";
 import api from "../../src/lib/api";
 import { motion } from "motion/react";
-import { cn } from "../../src/lib/utils";
+import { cn, getErrorMessage } from "../../src/lib/utils";
 
 export default function DashboardPage() {
   const { isLoading: authLoading } = useAuth();
   const [monitors, setMonitors] = useState<Monitor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingMonitor, setEditingMonitor] = useState<Monitor | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchMonitors = async () => {
+  const fetchMonitors = React.useCallback(async () => {
     try {
       const response = await api.get("/monitors");
       setMonitors(response.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to fetch monitors", err);
+      toast.error(getErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!authLoading) {
       fetchMonitors();
     }
-  }, [authLoading]);
+  }, [authLoading, fetchMonitors]);
 
-  const handleDeleteMonitor = async (id: string) => {
-    if (confirm("Are you sure you want to delete this monitor?")) {
-      try {
-        await api.delete(`/monitors/${id}`);
-        setMonitors(monitors.filter(m => m.id !== id));
-      } catch (err) {
-        console.error("Failed to delete monitor", err);
-      }
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure? This cannot be undone.")) return;
+    try {
+      await api.delete(`/monitors/${id}`);
+      setMonitors(monitors.filter((m) => m.id !== id));
+      toast.success("Monitor decommissioned");
+    } catch (err: any) {
+      toast.error(getErrorMessage(err));
     }
+  };
+
+  const handleEdit = (monitor: Monitor) => {
+    setEditingMonitor(monitor);
+    setIsModalOpen(true);
   };
 
   const filteredMonitors = monitors.filter(m => 
@@ -68,100 +77,116 @@ export default function DashboardPage() {
   if (authLoading) return <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center"><LoadingSpinner /></div>;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex overflow-hidden font-sans text-[#F5F5F5]">
+    <div className="min-h-screen bg-bg-base flex overflow-hidden">
       <Sidebar />
-      
-      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {/* Header */}
-        <header className="h-20 border-b border-[#1F1F1F] px-8 flex items-center justify-between shrink-0 bg-[#0A0A0A]/80 backdrop-blur-md sticky top-0 z-40">
+      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        {/* Header - Adjust for mobile */}
+        <header className="h-16 md:h-20 border-b border-border-card bg-bg-surface px-4 md:px-8 flex items-center justify-between shrink-0 sticky top-0 z-40 backdrop-blur-md bg-opacity-80 mt-16 md:mt-0">
           <div>
-            <h1 className="text-xl font-bold tracking-tight">System Dashboard</h1>
-            <p className="text-xs text-brand-muted mt-0.5">Overview of all active heartbeat monitors.</p>
+            <h1 className="text-lg md:text-xl font-bold text-white tracking-tight flex items-center gap-2">
+              Dashboard
+              <span className="bg-brand-primary/10 text-brand-primary text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest font-bold border border-brand-primary/20 hidden sm:inline-block">Live</span>
+            </h1>
           </div>
           
-          <div className="flex items-center gap-4">
-            <div className="relative hidden md:block">
+          <div className="flex items-center gap-3">
+            <div className="relative hidden lg:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
               <input 
                 type="text" 
                 placeholder="Search monitors..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-[#111111] border border-[#1F1F1F] rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-brand-primary/50 transition-all w-64"
+                className="bg-[#111111] border border-[#1F1F1F] rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-brand-primary/50 transition-all w-48 xl:w-64 placeholder:text-white/40"
               />
             </div>
             <button
-              onClick={() => setIsSlideOverOpen(true)}
-              className="bg-brand-primary hover:bg-[#6D31D1] text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-brand-primary/20 transition-all transform active:scale-95"
+              onClick={() => {
+                setEditingMonitor(null);
+                setIsModalOpen(true);
+              }}
+              className="flex items-center gap-2 px-3 md:px-5 h-9 md:h-10 bg-brand-primary hover:bg-[#6D31D1] text-white rounded-xl text-[10px] md:text-xs font-bold transition-all shadow-lg shadow-brand-primary/20 active:scale-[0.98]"
             >
-              <Plus className="w-5 h-5" />
-              <span>New Monitor</span>
+              <Plus className="w-4 h-4" />
+              <span className="hidden xs:inline">{editingMonitor ? "Edit" : "New"} Monitor</span>
+              <span className="xs:hidden">New</span>
             </button>
           </div>
         </header>
 
-        <div className="p-8 space-y-8 max-w-[1200px] mx-auto w-full">
-          {/* Stats Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard 
-              label="Total Monitors" 
-              value={monitors.length} 
-              icon={Activity}
-              color="text-brand-primary"
-            />
-            <StatCard 
-              label="Healthy" 
-              value={healthyCount} 
-              icon={CheckCircle2}
-              color="text-brand-success"
-            />
-            <StatCard 
-              label="Failing" 
-              value={failingCount} 
-              icon={AlertCircle}
-              color="text-brand-error"
-              pulse={failingCount > 0}
-            />
-            <StatCard 
-              label="Total Pings (24h)" 
-              value="1,284" 
-              icon={Zap}
-              color="text-yellow-500"
-            />
-          </div>
-
-          {/* Monitors Table Section */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold">Active Monitors</h2>
-              <span className="text-xs text-brand-muted bg-[#111111] px-2 py-1 rounded border border-[#1F1F1F]">
-                {filteredMonitors.length} matching
-              </span>
+        <div className="p-4 md:p-8 flex-1 overflow-y-auto custom-scrollbar">
+          <div className="max-w-[1400px] mx-auto w-full">
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8 md:mb-10">
+              <StatCard label="Total Monitors" value={monitors.length} icon={Activity} color="text-brand-primary" />
+              <StatCard label="Healthy" value={healthyCount} icon={CheckCircle2} color="text-brand-success" />
+              <StatCard label="Failing" value={failingCount} icon={AlertCircle} color="text-brand-error" pulse={failingCount > 0} />
+              <StatCard label="Total Pings (24h)" value="1,284" icon={Zap} color="text-yellow-500" />
             </div>
 
-            {isLoading ? (
-              <div className="py-20 flex justify-center">
-                <LoadingSpinner />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-6">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  Active Pings
+                  <span className="text-xs font-normal text-brand-muted">({filteredMonitors.length})</span>
+                </h2>
+
+                {isLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="h-20 bg-[#111111] border border-[#1F1F1F] rounded-xl animate-pulse" />
+                    ))}
+                  </div>
+                ) : filteredMonitors.length > 0 ? (
+                  <MonitorTable 
+                    monitors={filteredMonitors} 
+                    onDelete={handleDelete}
+                    onEdit={handleEdit}
+                  />
+                ) : (
+                  <EmptyState onAction={() => setIsModalOpen(true)} />
+                )}
               </div>
-            ) : filteredMonitors.length > 0 ? (
-              <MonitorTable 
-                monitors={filteredMonitors} 
-                onDelete={handleDeleteMonitor}
-              />
-            ) : (
-              <EmptyState onAction={() => setIsSlideOverOpen(true)} />
-            )}
+
+              <div className="space-y-8">
+                <div>
+                  <h2 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center gap-2">
+                    <History className="w-4 h-4 text-brand-muted" />
+                    Recent Events
+                  </h2>
+                  <div className="space-y-4">
+                    {monitors.slice(0, 5).map((m, i) => (
+                      <div key={i} className="flex gap-4 p-4 rounded-2xl bg-white/3 border border-[#1F1F1F] hover:bg-white/5 transition-colors group">
+                        <div className={cn(
+                          "w-10 h-10 shrink-0 rounded-xl flex items-center justify-center border",
+                          m.status === "healthy" ? "bg-brand-success/10 border-brand-success/20 text-brand-success" : "bg-brand-error/10 border-brand-error/20 text-brand-error"
+                        )}>
+                          <Radar className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-white truncate">{m.name}</div>
+                          <div className="text-[10px] text-brand-muted mt-0.5">{m.status === "healthy" ? "Heartbeat ok" : "Monitor failing"}</div>
+                          <div className="text-[9px] text-[#333] font-mono mt-1 uppercase">Just now</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </main>
 
-      <NewMonitorSlideOver 
-        isOpen={isSlideOverOpen} 
-        onClose={() => setIsSlideOverOpen(false)}
-        onSuccess={(newMonitor) => {
-          setMonitors([newMonitor, ...monitors]);
-        }}
-      />
+        <MonitorModal 
+          isOpen={isModalOpen} 
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingMonitor(null);
+          }}
+          editingMonitor={editingMonitor}
+          onSuccess={fetchMonitors}
+        />
+      </main>
     </div>
   );
 }
@@ -204,7 +229,7 @@ function EmptyState({ onAction }: { onAction: () => void }) {
       </p>
       <button
         onClick={onAction}
-        className="px-8 py-3 bg-brand-primary hover:bg-[#6D31D1] text-white rounded-xl font-bold transition-all shadow-xl shadow-brand-primary/20 flex items-center gap-2"
+        className="px-6 h-10 bg-brand-primary hover:bg-[#6D31D1] text-white rounded-xl font-bold transition-all shadow-xl shadow-brand-primary/20 flex items-center gap-2 text-xs"
       >
         <PlusCircle className="w-5 h-5" />
         Create First Monitor

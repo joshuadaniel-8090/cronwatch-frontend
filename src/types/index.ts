@@ -16,6 +16,7 @@ export interface User {
 export interface Monitor {
   id: string;
   name: string;
+  description?: string;
   interval_seconds: number;
   grace_seconds: number;
   token: string;
@@ -23,6 +24,8 @@ export interface Monitor {
   is_active: boolean;
   last_ping_at: string | null;
   status: MonitorStatus;
+  alert_channel: "telegram" | "email" | "both";
+  tags: string[];
   created_at: string;
 }
 

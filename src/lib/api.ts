@@ -1,8 +1,7 @@
-// src/lib/api.ts
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "",
 });
 
 // Attach JWT token to every request
@@ -14,14 +13,20 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Redirect to login on 401
+// Only redirect on 401 — do NOT clear token here (useAuthStore owns that)
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem("access_token");
-      if (window.location.pathname !== "/login" && window.location.pathname !== "/register" && window.location.pathname !== "/") {
-        window.location.href = "/login";
+      const pathname = window.location.pathname;
+      const publicPaths = ["/", "/login", "/register"];
+      if (!publicPaths.includes(pathname)) {
+        // Small delay so a server cold-boot doesn't instantly redirect
+        setTimeout(() => {
+          if (!localStorage.getItem("access_token")) {
+            window.location.href = "/login";
+          }
+        }, 500);
       }
     }
     return Promise.reject(err);

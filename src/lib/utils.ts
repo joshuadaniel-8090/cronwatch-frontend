@@ -31,6 +31,31 @@ export function timeAgo(timestamp: string | null): string {
   return `${formatDistanceToNow(new Date(timestamp))} ago`;
 }
 
+// Safely extract error message from API response
+export function getErrorMessage(err: any): string {
+  const data = err?.response?.data;
+  
+  // Try common error field names
+  const message = data?.detail || data?.message || data?.error || data?.msg;
+  
+  if (!message) {
+    if (err.message) return err.message;
+    return "An unexpected error occurred.";
+  }
+  
+  if (typeof message === "string") return message;
+  
+  if (Array.isArray(message)) {
+    return message.map((d: any) => d.msg || d.message || "Validation error").join(", ");
+  }
+  
+  if (typeof message === "object") {
+    return message.msg || message.message || JSON.stringify(message);
+  }
+  
+  return "Something went wrong.";
+}
+
 // Map seconds correctly for dropdowns
 export const INTERVAL_OPTIONS = [
   { label: "1 minute", value: 60 },

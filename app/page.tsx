@@ -67,7 +67,7 @@ export default function LandingPage() {
           >
             <Link
               href="/register"
-              className="px-6 py-3 bg-brand-primary border border-white/10 hover:bg-[#6D31D1] text-white rounded-xl text-base font-bold transition-all shadow-2xl shadow-brand-primary/40 flex items-center gap-2 group"
+              className="px-8 h-12 bg-brand-primary border border-white/10 hover:bg-[#6D31D1] text-white rounded-xl text-base font-bold transition-all shadow-2xl shadow-brand-primary/40 flex items-center gap-2 group"
             >
               Start Monitoring Free
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -286,7 +286,7 @@ export default function LandingPage() {
                 </div>
                 <Link
                   href="/register"
-                  className={`w-full py-3 rounded-lg font-bold text-center transition-all ${plan.popular ? 'bg-brand-primary hover:bg-[#6D31D1] text-white shadow-xl shadow-brand-primary/20' : 'bg-bg-base border border-border-card hover:border-brand-primary text-white'}`}
+                  className={`w-full h-11 rounded-xl font-bold flex items-center justify-center transition-all ${plan.popular ? 'bg-brand-primary hover:bg-[#6D31D1] text-white shadow-xl shadow-brand-primary/20' : 'bg-bg-base border border-border-card hover:border-brand-primary text-white'}`}
                 >
                   {plan.cta}
                 </Link>

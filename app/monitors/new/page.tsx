@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, Info, Loader2 } from "lucide-react";
 import { useAuth } from "../../../src/hooks/useAuth";
 import { Sidebar } from "../../../src/components/layout/Sidebar";
-import { INTERVAL_OPTIONS, GRACE_OPTIONS } from "../../../src/lib/utils";
+import { INTERVAL_OPTIONS, GRACE_OPTIONS, getErrorMessage } from "../../../src/lib/utils";
 import api from "../../../src/lib/api";
 
 export default function NewMonitorPage() {
@@ -30,7 +30,7 @@ export default function NewMonitorPage() {
       });
       router.push(`/monitors/${response.data.id}`);
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Failed to create monitor. Please try again.");
+      setError(getErrorMessage(err));
       setIsLoading(false);
     }
   };

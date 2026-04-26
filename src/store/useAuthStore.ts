@@ -28,14 +28,23 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const response = await api.get("/auth/me");
       set({ user: response.data, isAuthenticated: true, isLoading: false });
-    } catch (error) {
-      localStorage.removeItem("access_token");
-      set({ user: null, isAuthenticated: false, isLoading: false });
+    } catch (error: any) {
+      // Only log out if Supabase explicitly rejects the token
+      // Network errors (server booting, timeout) should NOT clear the token
+      if (error.response?.status === 401) {
+        localStorage.removeItem("access_token");
+        set({ user: null, isAuthenticated: false, isLoading: false });
+      } else {
+        // Keep the user's token — server may just be restarting
+        set({ isLoading: false });
+      }
     }
   },
   logout: () => {
-    localStorage.removeItem("access_token");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("access_token");
+      window.location.href = "/login";
+    }
     set({ user: null, isAuthenticated: false, isLoading: false });
-    window.location.href = "/login";
   },
 }));

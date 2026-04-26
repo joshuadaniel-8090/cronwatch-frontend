@@ -9,10 +9,12 @@ import { LoadingSpinner } from "../../../src/components/shared/LoadingSpinner";
 import { PingHistoryTable } from "../../../src/components/monitors/PingHistoryTable";
 import { StatusBadge } from "../../../src/components/shared/StatusBadge";
 import { CopyButton } from "../../../src/components/shared/CopyButton";
+import { NewMonitorSlideOver as MonitorModal } from "../../../src/components/monitors/NewMonitorSlideOver";
 import { Monitor, Ping } from "../../../src/types";
-import { formatInterval, timeAgo } from "../../../src/lib/utils";
+import { formatInterval, timeAgo, getErrorMessage } from "../../../src/lib/utils";
 import api from "../../../src/lib/api";
 import { format } from "date-fns";
+import toast from "react-hot-toast";
 
 export default function MonitorDetailPage() {
   const params = useParams();
@@ -22,35 +24,39 @@ export default function MonitorDetailPage() {
   const [monitor, setMonitor] = useState<Monitor | null>(null);
   const [pings, setPings] = useState<Ping[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const fetchData = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [monitorRes, pingsRes] = await Promise.all([
+        api.get(`/monitors/${id}`),
+        api.get(`/monitors/${id}/pings?limit=50`),
+      ]);
+      setMonitor(monitorRes.data);
+      setPings(pingsRes.data.pings);
+    } catch (err: any) {
+      console.error("Failed to fetch monitor details", err);
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [monitorRes, pingsRes] = await Promise.all([
-          api.get(`/monitors/${id}`),
-          api.get(`/monitors/${id}/pings?limit=50`),
-        ]);
-        setMonitor(monitorRes.data);
-        setPings(pingsRes.data.pings);
-      } catch (err) {
-        console.error("Failed to fetch monitor details", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     if (!authLoading && id) {
       fetchData();
     }
-  }, [id, authLoading]);
+  }, [id, authLoading, fetchData]);
 
   const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this monitor?")) return;
+    if (!window.confirm("Are you sure? This will permanently delete the monitor and all its history.")) return;
     try {
       await api.delete(`/monitors/${id}`);
-      router.push("/dashboard");
-    } catch (err) {
-      alert("Failed to delete monitor");
+      toast.success("Monitor deleted successfully");
+      router.push("/monitors");
+    } catch (err: any) {
+      toast.error(getErrorMessage(err));
     }
   };
 
@@ -62,25 +68,26 @@ export default function MonitorDetailPage() {
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex overflow-hidden font-sans text-[#F5F5F5]">
       <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <header className="h-20 border-b border-[#1F1F1F] px-8 flex items-center shrink-0 bg-[#0A0A0A]/80 backdrop-blur-md sticky top-0 z-40">
+      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        <header className="h-16 md:h-20 border-b border-[#1F1F1F] px-4 md:px-8 flex items-center shrink-0 bg-[#0A0A0A]/80 backdrop-blur-md sticky top-0 z-40 mt-16 md:mt-0">
           <button
             onClick={() => router.push("/dashboard")}
-            className="flex items-center gap-2 text-sm text-brand-muted hover:text-white mr-6 transition-colors group"
+            className="flex items-center gap-2 text-xs md:text-sm text-brand-muted hover:text-white mr-4 md:mr-6 transition-colors group"
           >
             <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            <span>Back to Dashboard</span>
+            <span className="hidden xs:inline">Back to Dashboard</span>
+            <span className="xs:hidden">Back</span>
           </button>
-          <div className="h-8 w-px bg-[#1F1F1F] mr-6" />
-          <h1 className="text-xl font-bold tracking-tight">Monitor Settings</h1>
+          <div className="h-8 w-px bg-[#1F1F1F] mr-4 md:mr-6" />
+          <h1 className="text-base md:text-xl font-bold tracking-tight">Monitor Settings</h1>
         </header>
 
-        <div className="p-8 flex-1">
+        <div className="p-4 md:p-8 flex-1 overflow-y-auto custom-scrollbar">
           <div className="max-w-[1200px] mx-auto w-full">
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 md:mb-10">
               <div>
-                <div className="flex items-center gap-4 mb-2">
-                  <h2 className="text-3xl font-bold text-white tracking-tight">{monitor.name}</h2>
+                <div className="flex items-center gap-3 md:gap-4 mb-2 flex-wrap">
+                  <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">{monitor.name}</h2>
                   <div className="relative">
                     <StatusBadge status={monitor.status} />
                     {monitor.status === "failing" && (
@@ -88,26 +95,30 @@ export default function MonitorDetailPage() {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 text-sm text-brand-muted font-mono">
-                  <span className="opacity-50 uppercase tracking-widest text-[10px] font-bold">ID:</span>
-                  <span className="bg-white/5 px-2 py-0.5 rounded italic">{monitor.id}</span>
-                  <span className="opacity-30">•</span>
-                  <span className="opacity-50 uppercase tracking-widest text-[10px] font-bold">created:</span>
-                  <span>{format(new Date(monitor.created_at), "MMM d, yyyy")}</span>
+                <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-sm text-brand-muted font-mono flex-wrap">
+                  <div className="flex items-center gap-1.5">
+                    <span className="opacity-50 uppercase tracking-widest text-[9px] font-bold">ID:</span>
+                    <span className="bg-white/5 px-2 py-0.5 rounded italic">{monitor.id}</span>
+                  </div>
+                  <span className="opacity-30 hidden xs:inline">•</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="opacity-50 uppercase tracking-widest text-[9px] font-bold">created:</span>
+                    <span>{format(new Date(monitor.created_at), "MMM d, yyyy")}</span>
+                  </div>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => {}} // TODO: Edit modal
-                  className="flex items-center gap-2 px-5 py-2.5 bg-[#111111] border border-[#1F1F1F] hover:border-brand-primary/50 text-[#F5F5F5] rounded-xl text-sm font-bold transition-all shadow-lg shadow-black/20"
+                  onClick={() => setIsModalOpen(true)}
+                  className="flex-1 md:flex-none flex items-center justify-center gap-2 h-10 px-4 md:px-5 bg-[#111111] border border-[#1F1F1F] hover:border-brand-primary/50 text-[#F5F5F5] rounded-xl text-xs font-bold transition-all shadow-lg shadow-black/20"
                 >
                   <Edit3 className="w-4 h-4" />
-                  <span>Edit Configuration</span>
+                  <span>Edit</span>
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-brand-error/10 border border-brand-error/20 hover:bg-brand-error text-brand-error hover:text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-brand-error/10"
+                  className="flex-1 md:flex-none flex items-center justify-center gap-2 h-10 px-4 md:px-5 bg-brand-error/10 border border-brand-error/20 hover:bg-brand-error text-brand-error hover:text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-brand-error/10"
                 >
                   <Trash2 className="w-4 h-4" />
                   <span>Delete</span>
@@ -115,27 +126,27 @@ export default function MonitorDetailPage() {
               </div>
             </header>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
-              <div className="p-6 bg-[#111111] border border-[#1F1F1F] rounded-2xl group hover:border-[#2F2F2F] transition-all">
-                <div className="flex items-center gap-3 text-brand-muted mb-3">
-                  <Clock className="w-4 h-4 opacity-50" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-brand-muted">Expected Every</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-10">
+              <div className="p-5 md:p-6 bg-[#111111] border border-[#1F1F1F] rounded-2xl group hover:border-[#2F2F2F] transition-all">
+                <div className="flex items-center gap-3 text-brand-muted mb-2 md:mb-3">
+                  <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 opacity-50" />
+                  <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-brand-muted">Expected Every</span>
                 </div>
-                <div className="text-2xl font-bold text-white tracking-tight">{formatInterval(monitor.interval_seconds)}</div>
+                <div className="text-xl md:text-2xl font-bold text-white tracking-tight">{formatInterval(monitor.interval_seconds)}</div>
               </div>
-              <div className="p-6 bg-[#111111] border border-[#1F1F1F] rounded-2xl group hover:border-[#2F2F2F] transition-all">
-                <div className="flex items-center gap-3 text-brand-muted mb-3">
-                  <BarChart3 className="w-4 h-4 opacity-50" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-brand-muted">Last Active</span>
+              <div className="p-5 md:p-6 bg-[#111111] border border-[#1F1F1F] rounded-2xl group hover:border-[#2F2F2F] transition-all">
+                <div className="flex items-center gap-3 text-brand-muted mb-2 md:mb-3">
+                  <BarChart3 className="w-3.5 h-3.5 md:w-4 md:h-4 opacity-50" />
+                  <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-brand-muted">Last Active</span>
                 </div>
-                <div className="text-2xl font-bold text-white tracking-tight">{timeAgo(monitor.last_ping_at)}</div>
+                <div className="text-xl md:text-2xl font-bold text-white tracking-tight">{timeAgo(monitor.last_ping_at)}</div>
               </div>
-              <div className="p-6 bg-[#111111] border border-[#1F1F1F] rounded-2xl group hover:border-[#2F2F2F] transition-all">
-                <div className="flex items-center gap-3 text-brand-muted mb-3">
-                  <Calendar className="w-4 h-4 opacity-50" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-brand-muted">Grace Period</span>
+              <div className="p-5 md:p-6 bg-[#111111] border border-[#1F1F1F] rounded-2xl group hover:border-[#2F2F2F] transition-all sm:col-span-2 lg:col-span-1">
+                <div className="flex items-center gap-3 text-brand-muted mb-2 md:mb-3">
+                  <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4 opacity-50" />
+                  <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-brand-muted">Grace Period</span>
                 </div>
-                <div className="text-2xl font-bold text-white tracking-tight">{monitor.grace_seconds / 60}m extra</div>
+                <div className="text-xl md:text-2xl font-bold text-white tracking-tight">{monitor.grace_seconds / 60}m extra</div>
               </div>
             </div>
 
@@ -195,6 +206,13 @@ export default function MonitorDetailPage() {
             </div>
           </div>
         </div>
+
+        <MonitorModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)}
+          editingMonitor={monitor}
+          onSuccess={fetchData}
+        />
       </main>
     </div>
   );
