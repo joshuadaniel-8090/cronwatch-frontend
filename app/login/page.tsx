@@ -3,10 +3,11 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Layout, Mail, Lock, Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Layout, Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import api from "../../src/lib/api";
 import { getErrorMessage } from "../../src/lib/utils";
 import { useAuthStore } from "../../src/store/useAuthStore";
+import { BackendStatus } from "../../src/components/auth/BackendStatus";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -25,6 +26,7 @@ export default function LoginPage() {
     try {
       const response = await api.post("/auth/login", { email, password });
       localStorage.setItem("access_token", response.data.access_token);
+      localStorage.setItem("last_activity", Date.now().toString());
       await fetchUser();
       router.push("/dashboard");
     } catch (err: any) {
@@ -36,6 +38,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-bg-base flex flex-col items-center justify-center p-4 sm:p-6">
+      <BackendStatus />
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-6 sm:mb-8">
           <Link 
@@ -95,7 +98,7 @@ export default function LoginPage() {
               disabled={isLoading}
               className="w-full h-11 bg-brand-primary hover:bg-[#6D31D1] text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-brand-primary/20 text-sm"
             >
-              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In"}
+              {isLoading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 

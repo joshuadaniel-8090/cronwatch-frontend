@@ -15,7 +15,13 @@ api.interceptors.request.use((config) => {
 
 // Only redirect on 401 — do NOT clear token here (useAuthStore owns that)
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    // Update last activity on successful requests
+    if (typeof window !== "undefined" && localStorage.getItem("access_token")) {
+      localStorage.setItem("last_activity", Date.now().toString());
+    }
+    return res;
+  },
   (err) => {
     if (err.response?.status === 401) {
       const pathname = window.location.pathname;

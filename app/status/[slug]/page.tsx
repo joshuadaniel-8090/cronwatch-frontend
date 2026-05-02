@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Activity, Clock, Globe, ShieldCheck } from "lucide-react";
 import { StatusBadge } from "../../../src/components/shared/StatusBadge";
-import { LoadingSpinner } from "../../../src/components/shared/LoadingSpinner";
+import { PublicStatusSkeleton } from "../../../src/components/shared/PageSkeleton";
 import { MonitorStatus } from "../../../src/types";
 import { formatInterval, timeAgo, cn } from "../../../src/lib/utils";
 import api from "../../../src/lib/api";
@@ -37,7 +37,7 @@ export default function PublicStatusPage() {
     if (slug) fetchData();
   }, [slug]);
 
-  if (isLoading) return <div className="min-h-screen bg-bg-base flex items-center justify-center"><LoadingSpinner /></div>;
+  if (isLoading) return <PublicStatusSkeleton />;
   if (!data) return <div className="min-h-screen bg-bg-base p-8 text-white text-center">Status page not found</div>;
 
   return (

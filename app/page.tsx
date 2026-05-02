@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { 
   Shield, 
@@ -18,9 +18,16 @@ import {
   ArrowRight
 } from "lucide-react";
 import { Navbar } from "../src/components/layout/Navbar";
+import { useAuthStore } from "../src/store/useAuthStore";
 import { motion } from "motion/react";
 
 export default function LandingPage() {
+  const { isAuthenticated, isLoading, fetchUser } = useAuthStore();
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
   return (
     <div className="min-h-screen bg-bg-base text-white font-sans">
       <Navbar />
@@ -65,13 +72,25 @@ export default function LandingPage() {
             transition={{ delay: 0.2 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-24"
           >
-            <Link
-              href="/register"
-              className="px-8 h-12 bg-brand-primary border border-white/10 hover:bg-[#6D31D1] text-white rounded-xl text-base font-bold transition-all shadow-2xl shadow-brand-primary/40 flex items-center gap-2 group"
-            >
-              Start Monitoring Free
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            {isLoading ? (
+              <div className="w-48 h-12 bg-white/5 animate-pulse rounded-xl" />
+            ) : isAuthenticated ? (
+              <Link
+                href="/dashboard"
+                className="px-8 h-12 bg-brand-primary border border-white/10 hover:bg-[#6D31D1] text-white rounded-xl text-base font-bold transition-all shadow-2xl shadow-brand-primary/40 flex items-center gap-2 group"
+              >
+                Go to Dashboard
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            ) : (
+              <Link
+                href="/register"
+                className="px-8 h-12 bg-brand-primary border border-white/10 hover:bg-[#6D31D1] text-white rounded-xl text-base font-bold transition-all shadow-2xl shadow-brand-primary/40 flex items-center gap-2 group"
+              >
+                Start Monitoring Free
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            )}
           </motion.div>
 
           <motion.div

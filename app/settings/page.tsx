@@ -9,7 +9,6 @@ import {
   Tv, 
   Phone, 
   Bell, 
-  Loader2, 
   Send, 
   CheckCircle2, 
   XCircle,
@@ -27,7 +26,8 @@ import toast from "react-hot-toast";
 import { useAuth } from "../../src/hooks/useAuth";
 import { useAuthStore } from "../../src/store/useAuthStore";
 import { Sidebar } from "../../src/components/layout/Sidebar";
-import { LoadingSpinner } from "../../src/components/shared/LoadingSpinner";
+import { SettingsSkeleton } from "../../src/components/shared/PageSkeleton";
+import { Skeleton } from "../../src/components/shared/Skeleton";
 import { cn, getErrorMessage } from "../../src/lib/utils";
 import api from "../../src/lib/api";
 import { motion, AnimatePresence } from "motion/react";
@@ -149,7 +149,10 @@ export default function SettingsPage() {
   const [expandedChannel, setExpandedChannel] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [usePrimaryEmail, setUsePrimaryEmail] = useState(false);
+  const [notifyOnRecoveryTelegram, setNotifyOnRecoveryTelegram] = useState(true);
+  const [notifyOnRecoveryEmail, setNotifyOnRecoveryEmail] = useState(true);
   const [initialValues, setInitialValues] = useState<Record<string, string>>({});
+  const [initialNotifyValues, setInitialNotifyValues] = useState({ telegram: true, email: true });
 
   useEffect(() => {
     if (user) {
@@ -164,10 +167,18 @@ export default function SettingsPage() {
       setValues(loadedValues);
       setInitialValues(loadedValues);
       setUsePrimaryEmail(user.alert_email === user.email || !user.alert_email);
+      setNotifyOnRecoveryTelegram(user.notify_on_recovery_telegram ?? true);
+      setNotifyOnRecoveryEmail(user.notify_on_recovery_email ?? true);
+      setInitialNotifyValues({
+        telegram: user.notify_on_recovery_telegram ?? true,
+        email: user.notify_on_recovery_email ?? true
+      });
     }
   }, [user]);
 
-  const hasUnsavedChanges = Object.keys(values).some(key => values[key] !== initialValues[key]);
+  const hasUnsavedChanges = Object.keys(values).some(key => values[key] !== initialValues[key]) || 
+                            notifyOnRecoveryTelegram !== initialNotifyValues.telegram || 
+                            notifyOnRecoveryEmail !== initialNotifyValues.email;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,6 +192,8 @@ export default function SettingsPage() {
         pagerduty_key: values.pagerduty || null,
         discord_webhook: values.discord || null,
         phone_number: values.sms || null,
+        notify_on_recovery_telegram: notifyOnRecoveryTelegram,
+        notify_on_recovery_email: notifyOnRecoveryEmail,
       });
       await fetchUser();
       toast.success("Preferences saved", {
@@ -261,14 +274,7 @@ export default function SettingsPage() {
 
   const activeCount = ["telegram", "email"].filter(id => isConfigured(id)).length;
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-bg-base flex">
-        <Sidebar />
-        <LoadingSpinner />
-      </div>
-    );
-  }
+  if (authLoading) return <SettingsSkeleton />;
 
   return (
     <div className="min-h-screen bg-bg-base flex overflow-hidden">
@@ -331,6 +337,24 @@ export default function SettingsPage() {
                             placeholder="e.g. 123456789"
                           />
                         </div>
+
+                        {isConfigured("telegram") && (
+                          <label className="flex items-center gap-3 cursor-pointer group/rc py-1">
+                            <div className={cn(
+                              "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                              notifyOnRecoveryTelegram ? "bg-brand-primary border-brand-primary shadow-sm shadow-brand-primary/40" : "border-border-card bg-bg-base/60"
+                            )}>
+                              {notifyOnRecoveryTelegram && <CheckCircle2 className="w-3 h-3 text-white" strokeWidth={4} />}
+                              <input 
+                                type="checkbox" 
+                                checked={notifyOnRecoveryTelegram}
+                                onChange={(e) => setNotifyOnRecoveryTelegram(e.target.checked)}
+                                className="sr-only"
+                              />
+                            </div>
+                            <span className="text-[11px] text-brand-muted group-hover/rc:text-white transition-colors">Also notify me when a monitor recovers</span>
+                          </label>
+                        )}
                       </div>
 
                       <div className="flex items-center justify-between">
@@ -357,7 +381,7 @@ export default function SettingsPage() {
                           )}
                         >
                           {testStatuses.telegram === "testing" ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <Skeleton circle className="w-3.5 h-3.5 bg-white/20" />
                           ) : testStatuses.telegram === "success" ? (
                             <CheckCircle2 className="w-3.5 h-3.5" />
                           ) : testStatuses.telegram === "error" ? (
@@ -461,6 +485,24 @@ export default function SettingsPage() {
                             placeholder="alerts@company.com"
                           />
                         </div>
+
+                        {isConfigured("email") && (
+                          <label className="flex items-center gap-3 cursor-pointer group/rc py-1">
+                            <div className={cn(
+                              "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                              notifyOnRecoveryEmail ? "bg-brand-primary border-brand-primary shadow-sm shadow-brand-primary/40" : "border-border-card bg-bg-base/60"
+                            )}>
+                              {notifyOnRecoveryEmail && <CheckCircle2 className="w-3 h-3 text-white" strokeWidth={4} />}
+                              <input 
+                                type="checkbox" 
+                                checked={notifyOnRecoveryEmail}
+                                onChange={(e) => setNotifyOnRecoveryEmail(e.target.checked)}
+                                className="sr-only"
+                              />
+                            </div>
+                            <span className="text-[11px] text-brand-muted group-hover/rc:text-white transition-colors">Also notify me when a monitor recovers</span>
+                          </label>
+                        )}
                       </div>
 
                       <div className="flex items-center justify-between">
@@ -480,7 +522,7 @@ export default function SettingsPage() {
                           )}
                         >
                           {testStatuses.email === "testing" ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <Skeleton circle className="w-3.5 h-3.5 bg-white/20" />
                           ) : testStatuses.email === "success" ? (
                             <CheckCircle2 className="w-3.5 h-3.5" />
                           ) : testStatuses.email === "error" ? (
@@ -507,11 +549,11 @@ export default function SettingsPage() {
                       )}
                     >
                       {isLoading ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Skeleton circle className="w-5 h-5 bg-white/20" />
                       ) : (
                         <Bell className="w-5 h-5" />
                       )}
-                      Save Notification Preferences
+                      {isLoading ? "Saving..." : "Save Notification Preferences"}
                     </button>
                     {hasUnsavedChanges && (
                       <div className="w-3 h-3 bg-brand-primary rounded-full animate-bounce shadow-[0_0_10px_#7C3AED]" title="Unsaved changes" />

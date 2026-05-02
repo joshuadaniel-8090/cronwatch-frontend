@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Loader2, Info, Bell, Tag, AlignLeft } from "lucide-react";
+import { X, Info, Bell, Tag, AlignLeft } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import toast from "react-hot-toast";
 import { INTERVAL_OPTIONS, GRACE_OPTIONS, cn, getErrorMessage } from "../../lib/utils";
@@ -273,7 +273,7 @@ export const NewMonitorSlideOver: React.FC<MonitorModalProps> = ({
                 disabled={isLoading}
                 className="flex-[2] h-10 bg-brand-primary hover:bg-[#6D31D1] text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-brand-primary/20 hover:shadow-brand-primary/40 active:scale-[0.98] text-xs"
               >
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : editingMonitor ? "Save Changes" : "Create Monitor"}
+                {isLoading ? "Saving..." : editingMonitor ? "Save Changes" : "Create Monitor"}
               </button>
             </div>
           </motion.div>

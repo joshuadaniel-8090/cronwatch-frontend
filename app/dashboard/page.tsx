@@ -16,7 +16,8 @@ import {
 import toast from "react-hot-toast";
 import { useAuth } from "../../src/hooks/useAuth";
 import { Sidebar } from "../../src/components/layout/Sidebar";
-import { LoadingSpinner } from "../../src/components/shared/LoadingSpinner";
+import { Skeleton } from "../../src/components/shared/Skeleton";
+import { DashboardSkeleton } from "../../src/components/shared/PageSkeleton";
 import { MonitorTable } from "../../src/components/monitors/MonitorTable";
 import { NewMonitorSlideOver as MonitorModal } from "../../src/components/monitors/NewMonitorSlideOver";
 import { Monitor } from "../../src/types";
@@ -74,7 +75,7 @@ export default function DashboardPage() {
   const healthyCount = monitors.filter(m => m.status === "healthy").length;
   const failingCount = monitors.filter(m => m.status === "failing").length;
 
-  if (authLoading) return <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center"><LoadingSpinner /></div>;
+  if (authLoading || (isLoading && monitors.length === 0)) return <DashboardSkeleton />;
 
   return (
     <div className="min-h-screen bg-bg-base flex overflow-hidden">
@@ -121,20 +122,35 @@ export default function DashboardPage() {
               <StatCard label="Total Monitors" value={monitors.length} icon={Activity} color="text-brand-primary" />
               <StatCard label="Healthy" value={healthyCount} icon={CheckCircle2} color="text-brand-success" />
               <StatCard label="Failing" value={failingCount} icon={AlertCircle} color="text-brand-error" pulse={failingCount > 0} />
-              <StatCard label="Total Pings (24h)" value="1,284" icon={Zap} color="text-yellow-500" />
+              <StatCard 
+                label="Uptime Score" 
+                value={monitors.length > 0 ? (healthyCount / monitors.length * 100).toFixed(0) + "%" : "100%"} 
+                icon={Zap} 
+                color={(monitors.length > 0 && healthyCount / monitors.length < 1) ? "text-yellow-500" : "text-brand-success"} 
+              />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-6">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  Active Pings
-                  <span className="text-xs font-normal text-brand-muted">({filteredMonitors.length})</span>
-                </h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    Active Pings
+                    <span className="text-xs font-normal text-brand-muted">({filteredMonitors.length})</span>
+                  </h2>
+                  {searchQuery && (
+                    <button 
+                      onClick={() => setSearchQuery("")}
+                      className="text-[10px] text-brand-primary hover:underline uppercase tracking-widest font-bold"
+                    >
+                      Clear Search
+                    </button>
+                  )}
+                </div>
 
-                {isLoading ? (
+                {isLoading && monitors.length === 0 ? (
                   <div className="space-y-3">
                     {[...Array(4)].map((_, i) => (
-                      <div key={i} className="h-20 bg-[#111111] border border-[#1F1F1F] rounded-xl animate-pulse" />
+                      <Skeleton key={i} className="h-20 rounded-xl" />
                     ))}
                   </div>
                 ) : filteredMonitors.length > 0 ? (
@@ -143,6 +159,12 @@ export default function DashboardPage() {
                     onDelete={handleDelete}
                     onEdit={handleEdit}
                   />
+                ) : searchQuery ? (
+                  <div className="flex flex-col items-center justify-center py-20 bg-[#111111] border border-[#1F1F1F] rounded-3xl">
+                    <Search className="w-10 h-10 text-brand-muted opacity-20 mb-4" />
+                    <h3 className="text-white font-bold mb-1">No matches found</h3>
+                    <p className="text-brand-muted text-xs">Try adjusting your search for &quot;{searchQuery}&quot;</p>
+                  </div>
                 ) : (
                   <EmptyState onAction={() => setIsModalOpen(true)} />
                 )}
@@ -152,21 +174,32 @@ export default function DashboardPage() {
                 <div>
                   <h2 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center gap-2">
                     <History className="w-4 h-4 text-brand-muted" />
-                    Recent Events
+                    System Activity
                   </h2>
                   <div className="space-y-4">
+                    {monitors.length === 0 && (
+                      <div className="text-center py-8">
+                        <p className="text-[10px] text-brand-muted uppercase font-bold tracking-widest">Waiting for activity...</p>
+                      </div>
+                    )}
                     {monitors.slice(0, 5).map((m, i) => (
                       <div key={i} className="flex gap-4 p-4 rounded-2xl bg-white/3 border border-[#1F1F1F] hover:bg-white/5 transition-colors group">
                         <div className={cn(
-                          "w-10 h-10 shrink-0 rounded-xl flex items-center justify-center border",
-                          m.status === "healthy" ? "bg-brand-success/10 border-brand-success/20 text-brand-success" : "bg-brand-error/10 border-brand-error/20 text-brand-error"
+                          "w-10 h-10 shrink-0 rounded-xl flex items-center justify-center border transition-all",
+                          m.status === "healthy" ? "bg-brand-success/10 border-brand-success/20 text-brand-success" : 
+                          m.status === "failing" ? "bg-brand-error/10 border-brand-error/20 text-brand-error" :
+                          "bg-white/5 border-white/10 text-brand-muted"
                         )}>
-                          <Radar className="w-5 h-5" />
+                          <Radar className={cn("w-5 h-5", m.status === "healthy" && "animate-pulse")} />
                         </div>
                         <div className="min-w-0">
                           <div className="text-xs font-bold text-white truncate">{m.name}</div>
-                          <div className="text-[10px] text-brand-muted mt-0.5">{m.status === "healthy" ? "Heartbeat ok" : "Monitor failing"}</div>
-                          <div className="text-[9px] text-[#333] font-mono mt-1 uppercase">Just now</div>
+                          <div className={"text-[10px] text-brand-muted mt-0.5"}>
+                            {m.status === "healthy" ? "Receiving pings via collector" : 
+                             m.status === "failing" ? "Monitor failed checking" : 
+                             "Waiting for first ping"}
+                          </div>
+                          <div className="text-[9px] text-white/20 font-mono mt-1 uppercase tracking-tighter">Real-time status</div>
                         </div>
                       </div>
                     ))}

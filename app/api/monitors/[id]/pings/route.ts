@@ -8,7 +8,7 @@ export async function GET(
   const pings = Array.from({ length: 20 }).map((_, i) => ({
     id: `ping_${i}`,
     monitor_id: params.id,
-    status: Math.random() > 0.1 ? "ok" : "fail",
+    status: i === 5 ? "recovery" : i > 5 ? (Math.random() > 0.8 ? "late" : "success") : "success",
     received_at: new Date(Date.now() - i * 60000).toISOString(),
     source_ip: "127.0.0.1",
     user_agent: "Cronwatch/1.0",

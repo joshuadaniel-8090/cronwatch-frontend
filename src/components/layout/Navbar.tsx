@@ -1,13 +1,11 @@
 // src/components/layout/Navbar.tsx
 import React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Layout, LogOut, User as UserIcon } from "lucide-react";
+import { Layout, LogOut } from "lucide-react";
 import { useAuthStore } from "../../store/useAuthStore";
 
 export const Navbar: React.FC = () => {
-  const { user, logout, isAuthenticated } = useAuthStore();
-  const router = useRouter();
+  const { isAuthenticated, isLoading, logout } = useAuthStore();
 
   return (
     <nav className="h-16 border-b border-border-card bg-bg-header flex items-center justify-between px-6 sticky top-0 z-50">
@@ -19,23 +17,26 @@ export const Navbar: React.FC = () => {
       </Link>
 
       <div className="flex items-center gap-4">
-        {isAuthenticated ? (
-          <>
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-bg-surface border border-border-card">
-              <UserIcon className="w-3.5 h-3.5 text-brand-muted" />
-              <span className="text-xs text-text-muted">{user?.email}</span>
-            </div>
+        {isLoading ? (
+          <div className="w-24 h-8 bg-white/5 animate-pulse rounded-md" />
+        ) : isAuthenticated ? (
+          <div className="flex items-center gap-4">
+            <Link
+              href="/dashboard"
+              className="px-4 py-2 bg-brand-primary hover:bg-[#6D31D1] text-white rounded-md text-sm font-medium transition-colors shadow-lg shadow-brand-primary/20"
+            >
+              Dashboard
+            </Link>
             <button
               onClick={() => {
                 logout();
-                router.push("/");
               }}
-              className="flex items-center gap-2 text-xs text-brand-muted hover:text-white transition-colors"
+              className="text-xs text-brand-muted hover:text-white transition-colors flex items-center gap-2"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline">Logout</span>
             </button>
-          </>
+          </div>
         ) : (
           <>
             <Link

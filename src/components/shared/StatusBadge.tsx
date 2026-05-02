@@ -21,6 +21,12 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
       text: "Failing",
       color: "text-brand-error",
     },
+    recovered: {
+      bg: "bg-brand-success/10",
+      dot: "bg-brand-success",
+      text: "Recovered",
+      color: "text-brand-success",
+    },
     waiting: {
       bg: "bg-white/5",
       dot: "bg-brand-muted",

@@ -3,6 +3,8 @@ import { create } from "zustand";
 import { User } from "../types";
 import api from "../lib/api";
 
+const SESSION_DURATION = 60 * 60 * 1000; // 60 minutes in milliseconds
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -10,40 +12,91 @@ interface AuthState {
   setUser: (user: User | null) => void;
   fetchUser: () => Promise<void>;
   logout: () => void;
+  updateActivity: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+// Helper to check if session is still valid
+const isSessionValid = () => {
+  const token = localStorage.getItem("access_token");
+  const lastActivity = localStorage.getItem("last_activity");
+  
+  if (!token || !lastActivity) return false;
+  
+  const now = Date.now();
+  const lastActiveTime = parseInt(lastActivity, 10);
+  
+  return now - lastActiveTime < SESSION_DURATION;
+};
+
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
-  isLoading: true,
-  setUser: (user) => set({ user, isAuthenticated: !!user, isLoading: false }),
+  isLoading: false,
+  
+  setUser: (user) => {
+    if (user) {
+      localStorage.setItem("last_activity", Date.now().toString());
+    }
+    set({ user, isAuthenticated: !!user, isLoading: false });
+  },
+
+  updateActivity: () => {
+    if (localStorage.getItem("access_token")) {
+      localStorage.setItem("last_activity", Date.now().toString());
+    }
+  },
+
   fetchUser: async () => {
+    // Only run if we have window access
+    if (typeof window === "undefined") return;
+
     const token = localStorage.getItem("access_token");
     
-    if (!token) {
-      set({ user: null, isAuthenticated: false, isLoading: false });
+    // Check if session has expired due to inactivity
+    if (!token || !isSessionValid()) {
+      if (token) {
+        console.log("Session expired due to inactivity");
+        get().logout();
+      } else {
+        set({ user: null, isAuthenticated: false, isLoading: false });
+      }
       return;
     }
 
+    // We have a token and it's potentially valid, start loading if not already
+    if (!get().user) {
+      set({ isLoading: true });
+    }
+
     try {
+      // Update activity timestamp on every successful fetch
+      localStorage.setItem("last_activity", Date.now().toString());
+      
       const response = await api.get("/auth/me");
       set({ user: response.data, isAuthenticated: true, isLoading: false });
     } catch (error: any) {
-      // Only log out if Supabase explicitly rejects the token
-      // Network errors (server booting, timeout) should NOT clear the token
-      if (error.response?.status === 401) {
-        localStorage.removeItem("access_token");
-        set({ user: null, isAuthenticated: false, isLoading: false });
+      console.error("Auth verification failed:", error);
+      
+      // Only log out if the server explicitly rejects the token (401/403)
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        get().logout();
       } else {
-        // Keep the user's token — server may just be restarting
+        // For network errors, we keep the session active but stop loading
+        // This handles cases like server cold boot
         set({ isLoading: false });
       }
     }
   },
+
   logout: () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("access_token");
-      window.location.href = "/login";
+      localStorage.removeItem("last_activity");
+      // Check if we're not already on a public page to avoid infinite redirect loops
+      const publicPaths = ["/", "/login", "/register"];
+      if (!publicPaths.includes(window.location.pathname)) {
+        window.location.href = "/login";
+      }
     }
     set({ user: null, isAuthenticated: false, isLoading: false });
   },

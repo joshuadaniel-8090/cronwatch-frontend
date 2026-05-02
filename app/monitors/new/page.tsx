@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Info, Loader2 } from "lucide-react";
+import { ChevronLeft, Info } from "lucide-react";
 import { useAuth } from "../../../src/hooks/useAuth";
 import { Sidebar } from "../../../src/components/layout/Sidebar";
 import { INTERVAL_OPTIONS, GRACE_OPTIONS, getErrorMessage } from "../../../src/lib/utils";
@@ -128,7 +128,7 @@ export default function NewMonitorPage() {
                 disabled={isLoading}
                 className="w-full py-3 bg-brand-primary hover:bg-[#6D31D1] text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-brand-primary/20"
               >
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create Monitor"}
+                {isLoading ? "Creating..." : "Create Monitor"}
               </button>
             </form>
           </div>

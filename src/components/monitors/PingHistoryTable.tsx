@@ -1,6 +1,7 @@
 // src/components/monitors/PingHistoryTable.tsx
 import React from "react";
 import { format } from "date-fns";
+import { CheckCircle2 } from "lucide-react";
 import { Ping } from "../../types";
 import { cn } from "../../lib/utils";
 
@@ -37,13 +38,20 @@ export const PingHistoryTable: React.FC<PingHistoryTableProps> = ({ pings }) => 
               <td className="px-4 md:px-6 py-4">
                 <span
                   className={cn(
-                    "px-2 py-0.5 rounded-full text-[10px] md:text-xs font-medium",
-                    ping.status === "ok"
+                    "px-2 py-0.5 rounded-full text-[10px] md:text-xs font-medium flex items-center gap-1 w-fit",
+                    ping.status === "recovery"
+                      ? "bg-brand-success/20 text-brand-success border border-brand-success/30"
+                      : ping.status === "success"
                       ? "bg-green-500/10 text-green-500"
                       : "bg-red-500/10 text-red-500"
                   )}
                 >
-                  {ping.status === "ok" ? "Success" : "Late"}
+                  {ping.status === "recovery" ? (
+                    <>
+                      <CheckCircle2 className="w-3 h-3" />
+                      Recovery
+                    </>
+                  ) : ping.status === "success" ? "Success" : "Late"}
                 </span>
               </td>
               <td className="px-4 md:px-6 py-4 text-gray-500 italic hidden sm:table-cell">HTTP Request</td>

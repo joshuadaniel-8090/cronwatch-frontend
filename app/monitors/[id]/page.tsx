@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, Trash2, Edit3, Terminal, Calendar, Clock, BarChart3 } from "lucide-react";
+import { ChevronLeft, Trash2, Edit3, Terminal, Calendar, Clock, BarChart3, CheckCircle2 } from "lucide-react";
 import { useAuth } from "../../../src/hooks/useAuth";
 import { Sidebar } from "../../../src/components/layout/Sidebar";
-import { LoadingSpinner } from "../../../src/components/shared/LoadingSpinner";
+import { MonitorDetailSkeleton } from "../../../src/components/shared/PageSkeleton";
 import { PingHistoryTable } from "../../../src/components/monitors/PingHistoryTable";
 import { StatusBadge } from "../../../src/components/shared/StatusBadge";
 import { CopyButton } from "../../../src/components/shared/CopyButton";
@@ -34,7 +34,7 @@ export default function MonitorDetailPage() {
         api.get(`/monitors/${id}/pings?limit=50`),
       ]);
       setMonitor(monitorRes.data);
-      setPings(pingsRes.data.pings);
+      setPings(pingsRes.data);
     } catch (err: any) {
       console.error("Failed to fetch monitor details", err);
       toast.error(getErrorMessage(err));
@@ -60,7 +60,7 @@ export default function MonitorDetailPage() {
     }
   };
 
-  if (authLoading || isLoading) return <div className="min-h-screen bg-bg-base flex"><Sidebar /><LoadingSpinner /></div>;
+  if (authLoading || isLoading) return <MonitorDetailSkeleton />;
   if (!monitor) return <div className="min-h-screen bg-bg-base flex"><Sidebar /><div className="p-8 text-white">Monitor not found</div></div>;
 
   const pingUrl = `${process.env.NEXT_PUBLIC_API_URL}/ping/${monitor.token}`;
@@ -90,6 +90,12 @@ export default function MonitorDetailPage() {
                   <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">{monitor.name}</h2>
                   <div className="relative">
                     <StatusBadge status={monitor.status} />
+                    {monitor.last_ping_status === "recovery" && (
+                      <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-brand-success/10 border border-brand-success/20 text-brand-success text-[10px] font-bold animate-in fade-in zoom-in duration-300">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Recovered
+                      </span>
+                    )}
                     {monitor.status === "failing" && (
                       <div className="absolute inset-0 bg-brand-error rounded-full animate-ping opacity-20" />
                     )}

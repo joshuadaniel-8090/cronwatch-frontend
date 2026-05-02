@@ -10,6 +10,7 @@ let monitors = [
     interval_seconds: 60,
     grace_seconds: 30,
     last_ping_at: new Date().toISOString(),
+    last_ping_status: "success",
     created_at: new Date(Date.now() - 86400000).toISOString(),
     token: "tok_abc123",
   },
@@ -21,8 +22,21 @@ let monitors = [
     interval_seconds: 3600,
     grace_seconds: 600,
     last_ping_at: new Date(Date.now() - 7200000).toISOString(),
+    last_ping_status: "late",
     created_at: new Date(Date.now() - 172800000).toISOString(),
     token: "tok_xyz789",
+  },
+  {
+    id: "mon_3",
+    name: "Database Sync",
+    slug: "db-sync",
+    status: "recovered",
+    interval_seconds: 300,
+    grace_seconds: 60,
+    last_ping_at: new Date(Date.now() - 120000).toISOString(),
+    last_ping_status: "recovery",
+    created_at: new Date(Date.now() - 432000000).toISOString(),
+    token: "tok_db123",
   }
 ];
 

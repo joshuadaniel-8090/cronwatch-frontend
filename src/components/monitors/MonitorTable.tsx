@@ -27,12 +27,15 @@ export const MonitorTable: React.FC<MonitorTableProps> = ({ monitors, onDelete, 
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
   const getReliability = (monitor: Monitor) => {
-    if (monitor.status === "healthy") return 100;
-    if (monitor.status === "failing") return 87.4;
-    return 0;
+    if (!monitor.last_ping_at) return "N/A";
+    if (monitor.status === "healthy") return "99.9";
+    if (monitor.status === "failing") return "84.2";
+    return "100";
   };
 
-  const getReliabilityColor = (percentage: number) => {
+  const getReliabilityColor = (value: string) => {
+    if (value === "N/A") return "bg-white/10";
+    const percentage = parseFloat(value);
     if (percentage >= 95) return "bg-brand-success";
     if (percentage >= 80) return "bg-yellow-500";
     return "bg-brand-error";
@@ -53,6 +56,7 @@ export const MonitorTable: React.FC<MonitorTableProps> = ({ monitors, onDelete, 
         {monitors.map((monitor) => {
           const reliability = getReliability(monitor);
           const isFailing = monitor.status === "failing";
+          const relNum = reliability === "N/A" ? 0 : parseFloat(reliability);
           
           return (
             <motion.div
@@ -70,7 +74,7 @@ export const MonitorTable: React.FC<MonitorTableProps> = ({ monitors, onDelete, 
                     <div className="relative">
                       <div className={cn(
                         "w-2.5 h-2.5 rounded-full",
-                        monitor.status === "healthy" ? "bg-brand-success shadow-[0_0_8px_rgba(34,197,94,0.4)]" : 
+                        monitor.status === "healthy" || monitor.status === "recovered" ? "bg-brand-success shadow-[0_0_8px_rgba(34,197,94,0.4)]" : 
                         isFailing ? "bg-brand-error shadow-[0_0_8px_rgba(239,68,68,0.4)]" : "bg-brand-muted"
                       )} />
                       {isFailing && (
@@ -78,6 +82,12 @@ export const MonitorTable: React.FC<MonitorTableProps> = ({ monitors, onDelete, 
                       )}
                     </div>
                     <span className="font-bold text-white text-sm">{monitor.name}</span>
+                    {monitor.last_ping_status === "recovery" && (
+                      <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-brand-success/10 border border-brand-success/20 text-brand-success text-[10px] font-bold animate-in fade-in zoom-in duration-300">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Recovered
+                      </span>
+                    )}
                   </div>
                   
                   {/* Actions Dropdown */}
@@ -134,8 +144,9 @@ export const MonitorTable: React.FC<MonitorTableProps> = ({ monitors, onDelete, 
                     <div className="flex items-center gap-2">
                        <span className={cn(
                           "text-xs font-bold",
-                          reliability >= 95 ? "text-brand-success" : reliability >= 80 ? "text-yellow-500" : "text-brand-error"
-                        )}>{reliability}%</span>
+                          reliability === "N/A" ? "text-brand-muted" : 
+                          relNum >= 95 ? "text-brand-success" : relNum >= 80 ? "text-yellow-500" : "text-brand-error"
+                        )}>{reliability === "N/A" ? reliability : reliability + "%"}</span>
                     </div>
                   </div>
                 </div>
@@ -177,6 +188,7 @@ export const MonitorTable: React.FC<MonitorTableProps> = ({ monitors, onDelete, 
             {monitors.map((monitor) => {
               const reliability = getReliability(monitor);
               const isFailing = monitor.status === "failing";
+              const relNum = reliability === "N/A" ? 0 : parseFloat(reliability);
               
               return (
                 <motion.tr
@@ -187,12 +199,12 @@ export const MonitorTable: React.FC<MonitorTableProps> = ({ monitors, onDelete, 
                   className="group bg-[#111111] border border-[#1F1F1F] hover:border-brand-primary/30 transition-all cursor-pointer relative"
                 >
                   {/* Status */}
-                  <td className="py-4 pl-6 rounded-l-2xl border-y border-l border-[#1F1F1F] group-hover:border-brand-primary/30">
+                  <td className="py-2 pl-6 rounded-l-2xl border-y border-l border-[#1F1F1F] group-hover:border-brand-primary/30">
                     <div className="flex justify-center">
                       <div className="relative">
                         <div className={cn(
                           "w-2.5 h-2.5 rounded-full",
-                          monitor.status === "healthy" ? "bg-brand-success shadow-[0_0_8px_rgba(34,197,94,0.4)]" : 
+                          monitor.status === "healthy" || monitor.status === "recovered" ? "bg-brand-success shadow-[0_0_8px_rgba(34,197,94,0.4)]" : 
                           isFailing ? "bg-brand-error shadow-[0_0_8px_rgba(239,68,68,0.4)]" : "bg-brand-muted"
                         )} />
                         {isFailing && (
@@ -203,10 +215,18 @@ export const MonitorTable: React.FC<MonitorTableProps> = ({ monitors, onDelete, 
                   </td>
 
                   {/* Name */}
-                  <td className="py-4 border-y border-[#1F1F1F] group-hover:border-brand-primary/30">
+                  <td className="py-2 border-y border-[#1F1F1F] group-hover:border-brand-primary/30">
                     <Link href={`/monitors/${monitor.id}`} className="block">
-                      <div className="font-bold text-[#F5F5F5] group-hover:text-brand-primary transition-colors text-sm truncate max-w-[150px] lg:max-w-none">
-                        {monitor.name}
+                      <div className="flex items-center gap-2">
+                        <div className="font-bold text-[#F5F5F5] group-hover:text-brand-primary transition-colors text-sm truncate max-w-[150px] lg:max-w-none">
+                          {monitor.name}
+                        </div>
+                        {monitor.last_ping_status === "recovery" && (
+                          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-brand-success/10 border border-brand-success/20 text-brand-success text-[9px] font-bold">
+                            <CheckCircle2 className="w-2.5 h-2.5" />
+                            Recovered
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5 text-[10px] text-brand-muted font-mono mt-0.5">
                         <span className="opacity-40">last ping:</span>
@@ -245,13 +265,14 @@ export const MonitorTable: React.FC<MonitorTableProps> = ({ monitors, onDelete, 
                       <div className="flex items-center justify-between text-[10px] mb-1">
                         <span className={cn(
                           "font-bold mx-auto",
-                          reliability >= 95 ? "text-brand-success" : reliability >= 80 ? "text-yellow-500" : "text-brand-error"
-                        )}>{reliability}%</span>
+                          reliability === "N/A" ? "text-brand-muted" : 
+                          relNum >= 95 ? "text-brand-success" : relNum >= 80 ? "text-yellow-500" : "text-brand-error"
+                        )}>{reliability === "N/A" ? reliability : reliability + "%"}</span>
                       </div>
                       <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
                         <motion.div 
                           initial={{ width: 0 }}
-                          animate={{ width: `${reliability}%` }}
+                          animate={{ width: reliability === "N/A" ? 0 : `${reliability}%` }}
                           className={cn("h-full rounded-full transition-all duration-1000", getReliabilityColor(reliability))}
                         />
                       </div>

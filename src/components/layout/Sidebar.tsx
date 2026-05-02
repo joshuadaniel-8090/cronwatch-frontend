@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAuthStore } from "../../store/useAuthStore";
+import { Skeleton } from "../shared/Skeleton";
+import { User } from "../../types";
 import { AnimatePresence, motion } from "motion/react";
 
 const NAV_ITEMS = [
@@ -24,13 +26,21 @@ const NAV_ITEMS = [
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
-  const { user, logout } = useAuthStore();
+  const { user, isLoading, logout } = useAuthStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const getInitials = (email: string | undefined) => {
-    if (!email) return "U";
-    return email.charAt(0).toUpperCase();
+  const getInitials = (user: User | null) => {
+    if (user?.name) {
+      return user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    if (user?.email) return user.email.charAt(0).toUpperCase();
+    return "U";
   };
 
   const navContent = (
@@ -44,10 +54,13 @@ export const Sidebar: React.FC = () => {
             </div>
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-brand-primary rounded-full animate-pulse border-2 border-[#111111]" />
           </div>
-          <span className={cn(
-            "text-xl font-bold text-white tracking-tight transition-all",
+          <div className={cn(
+            "flex flex-col transition-all",
             isCollapsed && "md:opacity-0 md:w-0"
-          )}>Cronwatch</span>
+          )}>
+            <span className="text-xl font-bold text-white tracking-tight leading-none">Cronwatch</span>
+            <span className="text-[10px] text-brand-muted font-mono mt-1 opacity-40">v0.1.0-beta</span>
+          </div>
         </div>
         
         {/* Collapse Toggle - Only visible on desktop */}
@@ -57,7 +70,7 @@ export const Sidebar: React.FC = () => {
         >
           {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
         </button>
-
+ 
         {/* Mobile Close Button */}
         <button 
           onClick={() => setIsMobileMenuOpen(false)}
@@ -66,7 +79,7 @@ export const Sidebar: React.FC = () => {
           <X className="w-6 h-6" />
         </button>
       </div>
-
+ 
       {/* Navigation */}
       <nav className="flex-1 px-3 space-y-1">
         {NAV_ITEMS.map((item) => {
@@ -97,29 +110,44 @@ export const Sidebar: React.FC = () => {
           );
         })}
       </nav>
-
+ 
       {/* User / Logout */}
       <div className="p-4 border-t border-[#1F1F1F] shrink-0">
         <div className={cn(
-          "flex items-center gap-3 p-2 rounded-xl bg-white/3 mb-3 overflow-hidden transition-all",
+          "flex items-center gap-3 p-2 rounded-xl bg-white/3 mb-3 overflow-hidden transition-all border border-transparent hover:border-white/5 transition-colors",
           isCollapsed ? "md:justify-center" : ""
         )}>
-          <div className="w-9 h-9 rounded-full bg-brand-primary flex items-center justify-center shrink-0 shadow-lg shadow-brand-primary/10">
-            <span className="text-sm font-bold text-white">
-              {getInitials(user?.email)}
-            </span>
-          </div>
-          <div className={cn(
-            "flex flex-col min-w-0 transition-all",
-            isCollapsed && "md:opacity-0 md:w-0"
-          )}>
-            <span className="text-xs font-semibold text-white truncate">
-              {user?.email?.split('@')[0]}
-            </span>
-            <span className="text-[10px] text-brand-muted truncate block max-w-[140px]">
-              {user?.email}
-            </span>
-          </div>
+          {isLoading && !user ? (
+            <>
+              <Skeleton circle className="w-9 h-9 shrink-0" />
+              <div className={cn(
+                "flex flex-col gap-1.5 transition-all w-full",
+                isCollapsed && "md:opacity-0 md:w-0"
+              )}>
+                <Skeleton className="h-3 w-2/3" />
+                <Skeleton className="h-2 w-full" />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-primary to-[#9333EA] flex items-center justify-center shrink-0 shadow-lg shadow-brand-primary/10 border border-white/10">
+                <span className="text-sm font-bold text-white tracking-wider">
+                  {getInitials(user)}
+                </span>
+              </div>
+              <div className={cn(
+                "flex flex-col min-w-0 transition-all",
+                isCollapsed && "md:opacity-0 md:w-0"
+              )}>
+                <span className="text-xs font-bold text-white truncate">
+                  {user?.name || user?.email?.split('@')[0]}
+                </span>
+                <span className="text-[10px] text-brand-muted truncate block max-w-[140px] font-medium">
+                  {user?.email}
+                </span>
+              </div>
+            </>
+          )}
         </div>
         
         <button
@@ -135,13 +163,6 @@ export const Sidebar: React.FC = () => {
             isCollapsed && "md:opacity-0 md:w-0"
           )}>Logout</span>
         </button>
-
-        <div className={cn(
-          "mt-4 px-3 text-[10px] text-brand-muted font-medium uppercase tracking-widest opacity-40 transition-all",
-          isCollapsed && "md:opacity-0 md:w-0"
-        )}>
-          v0.0.12
-        </div>
       </div>
     </>
   );

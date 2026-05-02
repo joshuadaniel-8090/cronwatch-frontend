@@ -4,7 +4,8 @@ import React, { useEffect, useState } from "react";
 import { Plus, Search, Filter, Activity, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useAuth } from "../../src/hooks/useAuth";
 import { Sidebar } from "../../src/components/layout/Sidebar";
-import { LoadingSpinner } from "../../src/components/shared/LoadingSpinner";
+import { Skeleton } from "../../src/components/shared/Skeleton";
+import { MonitorsSkeleton } from "../../src/components/shared/PageSkeleton";
 import { MonitorTable } from "../../src/components/monitors/MonitorTable";
 import { NewMonitorSlideOver as MonitorModal } from "../../src/components/monitors/NewMonitorSlideOver";
 import { Monitor } from "../../src/types";
@@ -65,7 +66,7 @@ export default function MonitorsPage() {
     failing: monitors.filter(m => m.status === "failing").length,
   };
 
-  if (authLoading) return <div className="min-h-screen bg-bg-base flex"><Sidebar /><LoadingSpinner /></div>;
+  if (authLoading || (isLoading && monitors.length === 0)) return <MonitorsSkeleton />;
 
   return (
     <div className="min-h-screen bg-bg-base flex overflow-hidden">
@@ -141,10 +142,10 @@ export default function MonitorsPage() {
               </button>
             </div>
 
-            {isLoading ? (
+            {isLoading && monitors.length === 0 ? (
               <div className="space-y-4">
                 {[...Array(5)].map((_, i) => (
-                  <div key={i} className="h-20 bg-[#111111] border border-[#1F1F1F] rounded-2xl animate-pulse" />
+                  <Skeleton key={i} className="h-20 rounded-2xl" />
                 ))}
               </div>
             ) : filteredMonitors.length > 0 ? (

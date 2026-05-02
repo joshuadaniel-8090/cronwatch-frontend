@@ -12,6 +12,7 @@ export async function POST(request: Request) {
         id: "user_123",
         email: body.email,
         name: body.email.split('@')[0],
+        plan: "free",
       }
     });
   } catch (error) {
