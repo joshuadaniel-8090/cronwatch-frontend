@@ -24,7 +24,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const response = await api.post("/auth/login", { email, password });
+      const response = await api.post("auth/login", { email, password });
       localStorage.setItem("access_token", response.data.access_token);
       localStorage.setItem("last_activity", Date.now().toString());
       await fetchUser();

@@ -8,6 +8,8 @@ interface StatusBadgeProps {
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
+  const safeStatus = status || 'waiting';
+  
   const config = {
     healthy: {
       bg: "bg-brand-success/10",
@@ -35,7 +37,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
     },
   };
 
-  const { bg, dot, text, color } = config[status];
+  const currentConfig = config[safeStatus as keyof typeof config] || config.waiting;
+  const { bg, dot, text, color } = currentConfig;
 
   return (
     <div className={cn("px-3 py-1 rounded-full flex items-center gap-2 border border-transparent shadow-sm", bg)}>

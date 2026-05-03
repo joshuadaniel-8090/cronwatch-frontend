@@ -13,7 +13,7 @@ interface MonitorCardProps {
 export const MonitorCard: React.FC<MonitorCardProps> = ({ monitor }) => {
   return (
     <Link
-      href={`/monitors/${monitor.id}`}
+      href={`/dashboard/${monitor.id}`}
       className="block p-5 bg-bg-surface border border-border-card rounded-xl hover:border-brand-primary/50 transition-all group shadow-sm hover:shadow-brand-primary/10"
     >
       <div className="flex items-start justify-between mb-4">

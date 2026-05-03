@@ -74,3 +74,8 @@ export const GRACE_OPTIONS = [
   { label: "10 minutes", value: 600 },
   { label: "30 minutes", value: 1800 },
 ];
+
+export const PLAN_LIMITS = {
+  free: 15,
+  pro: Infinity,
+};

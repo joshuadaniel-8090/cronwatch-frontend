@@ -41,7 +41,8 @@ export default function MonitorDetailPage() {
       ]);
       setMonitor(monitorRes.data);
       setPings(Array.isArray(pingsRes.data) ? pingsRes.data : []);
-      setMonitorsCount(Array.isArray(monitorsRes.data) ? monitorsRes.data.length : 0);
+      const monitorsData = monitorsRes.data;
+      setMonitorsCount(Array.isArray(monitorsData) ? monitorsData.length : 0);
     } catch (err: any) {
       console.error("Failed to fetch monitor details", err);
       toast.error(getErrorMessage(err));
@@ -64,7 +65,7 @@ export default function MonitorDetailPage() {
       const res = await api.delete(`monitors/${id}`);
       console.log(`[UI] Delete response:`, res.data);
       toast.success("Monitor deleted successfully");
-      router.push("/monitors");
+      router.push("/dashboard");
     } catch (err: any) {
       console.error("[UI] Delete failed:", err);
       toast.error(getErrorMessage(err));
@@ -78,8 +79,9 @@ export default function MonitorDetailPage() {
 
   useEffect(() => {
     if (monitor && typeof window !== "undefined") {
-      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || `${window.location.origin}/api`).replace(/\/$/, "");
-      setPingUrl(`${baseUrl}/ping/${monitor.token}`);
+      // Use logical relative path /api for the client ping URL so it works through the proxy
+      const baseUrl = "/api";
+      setPingUrl(`${window.location.origin}${baseUrl}/ping/${monitor.token}`);
     }
   }, [monitor]);
 

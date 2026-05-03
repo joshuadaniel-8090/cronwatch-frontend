@@ -14,17 +14,18 @@ export function BackendStatus() {
     const checkConnection = async () => {
       try {
         // Try to reach a public or auth endpoint
-        await api.get('/auth/me').catch(err => {
+        await api.get('auth/me').catch(err => {
             // Even if it's 401, if we got a response, the backend is UP
             if (err.response) return { status: 200 };
             throw err;
         });
         setStatus('connected');
       } catch (error) {
+        console.error("[BackendStatus] Failed connect:", error);
         setStatus('disconnected');
       }
       
-      const baseUrl = api.defaults.baseURL || (typeof window !== 'undefined' ? window.location.origin : '');
+      const baseUrl = api.defaults.baseURL || '';
       setApiUrl(baseUrl);
     };
 

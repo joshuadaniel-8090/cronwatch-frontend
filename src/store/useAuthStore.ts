@@ -72,7 +72,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // Update activity timestamp on every successful fetch
       localStorage.setItem("last_activity", Date.now().toString());
       
-      const response = await api.get("/auth/me");
+      const response = await api.get("auth/me");
       set({ user: response.data, isAuthenticated: true, isLoading: false });
     } catch (error: any) {
       console.error("Auth verification failed:", error);

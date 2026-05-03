@@ -26,7 +26,7 @@ export default function PublicStatusPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get(`/status/${slug}`);
+        const response = await api.get(`status/${slug}`);
         setData(response.data);
       } catch (err) {
         console.error("Failed to fetch public status", err);

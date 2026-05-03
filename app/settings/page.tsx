@@ -185,7 +185,7 @@ export default function SettingsPage() {
     setIsLoading(true);
 
     try {
-      await api.put("/settings/alerts", {
+      await api.put("settings/alerts", {
         telegram_chat_id: values.telegram || null,
         alert_email: values.email || null,
         slack_webhook: values.slack || null,
@@ -225,7 +225,7 @@ export default function SettingsPage() {
     setTestStatuses(prev => ({ ...prev, [channelId]: "testing" }));
     
     try {
-      await api.post("/settings/alerts/test", {
+      await api.post("settings/alerts/test", {
         type: channelId,
         [channelId === "telegram" ? "chat_id" : "email"]: value,
       });

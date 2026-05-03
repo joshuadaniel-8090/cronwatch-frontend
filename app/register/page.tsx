@@ -27,14 +27,14 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      await api.post("/auth/register", { 
+      await api.post("auth/register", { 
         name,
         email, 
         password,
         usage_category: usageCategory,
         referral_source: referralSource
       });
-      const loginResponse = await api.post("/auth/login", { email, password });
+      const loginResponse = await api.post("auth/login", { email, password });
       localStorage.setItem("access_token", loginResponse.data.access_token);
       localStorage.setItem("last_activity", Date.now().toString());
       await fetchUser();

@@ -1,6 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Add any Next.js configuration options here
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://cronwatch-backend.onrender.com/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

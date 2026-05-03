@@ -263,7 +263,7 @@ export default function LandingPage() {
                 name: "Hobby",
                 price: "$0",
                 desc: "Perfect for personal projects.",
-                features: ["3 Monitors", "1 Minute Frequency", "Email Alerts", "Basic Grace Period", "7 Day History"],
+                features: ["15 Monitors", "1 Minute Frequency", "Email Alerts", "Basic Grace Period", "7 Day History"],
                 cta: "Start Free",
                 popular: false
               },
