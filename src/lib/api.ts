@@ -1,11 +1,6 @@
 import axios from "axios";
 
 const getBaseUrl = () => {
-  // If we're on the client, use relative /api path to benefit from Next.js rewrites (CORS fix)
-  if (typeof window !== "undefined") {
-    return "/api";
-  }
-  // Server-side: use the direct URL if available, else localhost (unlikely to be used in this SPA pattern)
   return process.env.NEXT_PUBLIC_API_URL || "https://cronwatch-backend.onrender.com";
 };
 
@@ -53,3 +48,14 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+// URL Monitors
+export const getUrlMonitors = () => api.get("/url-monitors");
+export const createUrlMonitor = (data: any) => api.post("/url-monitors", data);
+export const getUrlMonitor = (id: string) => api.get(`/url-monitors/${id}`);
+export const updateUrlMonitor = (id: string, data: any) => api.put(`/url-monitors/${id}`, data);
+export const deleteUrlMonitor = (id: string) => api.delete(`/url-monitors/${id}`);
+export const getUrlMonitorLogs = (id: string, page = 1) =>
+  api.get(`/url-monitors/${id}/logs?page=${page}&limit=50`);
+export const getUrlMonitorAlerts = (id: string) => api.get(`/url-monitors/${id}/alerts`);
+

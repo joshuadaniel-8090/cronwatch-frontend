@@ -1,10 +1,10 @@
 // src/components/shared/StatusBadge.tsx
 import React from "react";
-import { MonitorStatus } from "../../types";
+import { MonitorStatus, UrlMonitorStatus } from "../../types";
 import { cn } from "../../lib/utils";
 
 interface StatusBadgeProps {
-  status: MonitorStatus;
+  status: MonitorStatus | UrlMonitorStatus;
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
@@ -17,11 +17,25 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
       text: "Healthy",
       color: "text-brand-success",
     },
+    up: {
+      bg: "bg-brand-success/10",
+      dot: "bg-brand-success",
+      text: "Up",
+      color: "text-brand-success",
+    },
     failing: {
       bg: "bg-brand-error/10",
       dot: "bg-brand-error",
       text: "Failing",
       color: "text-brand-error",
+      pulse: true
+    },
+    down: {
+      bg: "bg-brand-error/10",
+      dot: "bg-brand-error",
+      text: "Down",
+      color: "text-brand-error",
+      pulse: true
     },
     recovered: {
       bg: "bg-brand-success/10",
@@ -38,12 +52,18 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
   };
 
   const currentConfig = config[safeStatus as keyof typeof config] || config.waiting;
-  const { bg, dot, text, color } = currentConfig;
+  const { bg, dot, text, color, pulse } = currentConfig as any;
 
   return (
     <div className={cn("px-3 py-1 rounded-full flex items-center gap-2 border border-transparent shadow-sm", bg)}>
-      <span className={cn("w-1.5 h-1.5 rounded-full", dot)} />
+      <div className="relative">
+        <span className={cn("block w-1.5 h-1.5 rounded-full", dot)} />
+        {pulse && (
+          <span className={cn("absolute inset-0 w-1.5 h-1.5 rounded-full animate-ping opacity-75", dot)} />
+        )}
+      </div>
       <span className={cn("text-[11px] font-bold uppercase tracking-wider", color)}>{text}</span>
     </div>
   );
 };
+

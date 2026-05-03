@@ -13,9 +13,7 @@ export function BackendStatus() {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        // Try to reach a public or auth endpoint
         await api.get('auth/me').catch(err => {
-            // Even if it's 401, if we got a response, the backend is UP
             if (err.response) return { status: 200 };
             throw err;
         });
@@ -25,8 +23,8 @@ export function BackendStatus() {
         setStatus('disconnected');
       }
       
-      const baseUrl = api.defaults.baseURL || '';
-      setApiUrl(baseUrl);
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? window.location.origin + '/api' : '');
+      setApiUrl(baseUrl.replace(/\/$/, ""));
     };
 
     checkConnection();

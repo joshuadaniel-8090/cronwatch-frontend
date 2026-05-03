@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { 
   Home, 
   Radio, 
+  Globe,
   Settings, 
   LogOut, 
   ChevronLeft, 
@@ -20,6 +21,8 @@ import { AnimatePresence, motion } from "motion/react";
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: Home, path: "/dashboard" },
+  { label: "Monitors", icon: Radio, path: "/monitors" },
+  { label: "Uptime", icon: Globe, path: "/url-monitors" },
 ];
 
 export const Sidebar: React.FC = () => {
