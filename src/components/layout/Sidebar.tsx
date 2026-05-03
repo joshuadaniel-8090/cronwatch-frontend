@@ -69,6 +69,7 @@ export const Sidebar: React.FC = () => {
             isCollapsed && "md:opacity-0 md:w-0"
           )}>
             <span className="text-xl font-bold text-white tracking-tight leading-none">Cronwatch</span>
+            <span className="text-[10px] text-brand-muted font-mono mt-1 opacity-40">v0.1.143</span>
           </div>
         </div>
         
