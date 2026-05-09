@@ -72,7 +72,6 @@ export const Sidebar: React.FC = () => {
             isCollapsed && "md:opacity-0 md:w-0"
           )}>
             <span className="text-xl font-bold text-white tracking-tight leading-none">Cronwatch</span>
-            <span className="text-[10px] text-brand-muted font-mono mt-1 opacity-40">v0.1.143</span>
           </div>
         </div>
         
@@ -170,6 +169,12 @@ export const Sidebar: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {!isCollapsed && (
+          <div className="flex justify-center mb-4">
+            <span className="text-[12px] text-brand-primary/60 font-bold font-mono px-3 py-1 bg-brand-primary/5 rounded-full border border-brand-primary/10 tracking-tighter">v0.1.574</span>
+          </div>
+        )}
 
         <button 
           onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
