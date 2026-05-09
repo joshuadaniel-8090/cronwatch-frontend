@@ -4,18 +4,15 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "../store/useAuthStore";
 
 export const useAuth = () => {
-  const { isAuthenticated, isLoading, fetchUser } = useAuthStore();
+  const { isAuthenticated, isLoading, isInitialized } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    // Only redirect if we have definitely finished initializing and are not authenticated
+    if (isInitialized && !isLoading && !isAuthenticated) {
       router.push("/login");
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, isInitialized, router]);
 
-  return { isAuthenticated, isLoading };
+  return { isAuthenticated, isLoading, isInitialized };
 };

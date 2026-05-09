@@ -4,6 +4,8 @@ import { Toaster } from "react-hot-toast";
 import { Analytics } from "@vercel/analytics/react";
 import "../src/index.css";
 
+import { AuthInit } from "../src/components/auth/AuthInit";
+
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
@@ -20,9 +22,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${mono.variable}`}>
       <body className={`${inter.className} font-sans`}>
-        <Toaster position="top-right" />
-        {children}
-        <Analytics />
+        <AuthInit>
+          <Toaster position="top-right" />
+          {children}
+          <Analytics />
+        </AuthInit>
       </body>
     </html>
   );

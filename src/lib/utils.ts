@@ -76,6 +76,6 @@ export const GRACE_OPTIONS = [
 ];
 
 export const PLAN_LIMITS = {
-  free: 15,
+  free: 5,
   pro: Infinity,
 };

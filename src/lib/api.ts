@@ -31,18 +31,13 @@ api.interceptors.response.use(
   (err) => {
     const fullUrl = `${err.config?.baseURL}${err.config?.url}`;
     console.error(`[API Error] ${err.config?.method?.toUpperCase()} ${fullUrl} - Status: ${err.response?.status || "Network Error"}`);
+    
     if (err.response?.status === 401) {
-      const pathname = window.location.pathname;
-      const publicPaths = ["/", "/login", "/register"];
-      if (!publicPaths.includes(pathname)) {
-        // Small delay so a server cold-boot doesn't instantly redirect
-        setTimeout(() => {
-          if (!localStorage.getItem("access_token")) {
-            window.location.href = "/login";
-          }
-        }, 500);
-      }
+      // Use the store's logout which handles the redirect and state cleanup
+      const { useAuthStore } = require("../store/useAuthStore");
+      useAuthStore.getState().logout();
     }
+    
     return Promise.reject(err);
   }
 );
@@ -58,4 +53,5 @@ export const deleteUrlMonitor = (id: string) => api.delete(`/url-monitors/${id}`
 export const getUrlMonitorLogs = (id: string, page = 1) =>
   api.get(`/url-monitors/${id}/logs?page=${page}&limit=50`);
 export const getUrlMonitorAlerts = (id: string) => api.get(`/url-monitors/${id}/alerts`);
+export const testUrlMonitor = (url: string) => api.post("/url-monitors/test", { url });
 

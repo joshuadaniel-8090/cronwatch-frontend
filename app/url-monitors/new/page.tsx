@@ -24,7 +24,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "../../../src/hooks/useAuth";
 import { Sidebar } from "../../../src/components/layout/Sidebar";
 import { useAuthStore } from "../../../src/store/useAuthStore";
-import { createUrlMonitor } from "../../../src/lib/api";
+import { createUrlMonitor, testUrlMonitor } from "../../../src/lib/api";
 import { cn } from "../../../src/lib/utils";
 import { ProBadge, ProLock } from "../../../src/components/shared/ProBadge";
 import { DashboardSkeleton } from "../../../src/components/shared/PageSkeleton";
@@ -34,6 +34,11 @@ export default function NewUrlMonitorPage() {
   const { isLoading: authLoading } = useAuth();
   const { user } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{
+    status: "up" | "down" | "error";
+    message: string;
+  } | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -42,7 +47,7 @@ export default function NewUrlMonitorPage() {
     method: "GET",
     headers: [{ key: "", value: "" }],
     body: "",
-    check_interval_seconds: 600,
+    check_interval_seconds: 300,
     timeout_seconds: 10,
     expected_status_code: 200,
     alert_channels: {
@@ -66,6 +71,37 @@ export default function NewUrlMonitorPage() {
     const newHeaders = [...formData.headers];
     newHeaders[index][field] = value;
     setFormData({ ...formData, headers: newHeaders });
+  };
+
+  const handleTestUrl = async () => {
+    if (!formData.url) return;
+    
+    setIsTesting(true);
+    setTestResult(null);
+    
+    try {
+      const res = await testUrlMonitor(formData.url);
+      const data = res.data;
+      
+      if (data.status === "up") {
+        setTestResult({
+          status: "up",
+          message: `Up — ${data.response_time_ms}ms (HTTP ${data.status_code})`
+        });
+      } else {
+        setTestResult({
+          status: "down",
+          message: `Down — ${data.error_message || `HTTP ${data.status_code}`}`
+        });
+      }
+    } catch (err: any) {
+      setTestResult({
+        status: "error",
+        message: "Test failed — check your connection"
+      });
+    } finally {
+      setIsTesting(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -144,14 +180,43 @@ export default function NewUrlMonitorPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-[11px] font-bold text-brand-muted uppercase tracking-widest">URL to Monitor</label>
-                  <input 
-                    required
-                    type="url" 
-                    value={formData.url}
-                    onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                    placeholder="https://api.example.com"
-                    className="w-full bg-black/40 border border-[#1F1F1F] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-primary/50 transition-all"
-                  />
+                  <div className="flex gap-3">
+                    <input 
+                      required
+                      type="url" 
+                      value={formData.url}
+                      onChange={(e) => {
+                        setFormData({ ...formData, url: e.target.value });
+                        setTestResult(null);
+                      }}
+                      placeholder="https://api.example.com"
+                      className="flex-1 bg-black/40 border border-[#1F1F1F] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand-primary/50 transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleTestUrl}
+                      disabled={!formData.url || isTesting}
+                      className={cn(
+                        "px-6 rounded-xl text-xs font-bold transition-all flex items-center justify-center min-w-[100px]",
+                        "bg-white/5 hover:bg-white/10 text-white border border-[#1F1F1F]",
+                        "disabled:opacity-50 disabled:cursor-not-allowed"
+                      )}
+                    >
+                      {isTesting ? (
+                        <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        "Test URL"
+                      )}
+                    </button>
+                  </div>
+                  {testResult && (
+                    <div className={cn(
+                      "flex items-center gap-2 text-[11px] font-bold mt-2 animate-in fade-in slide-in-from-top-1 duration-200",
+                      testResult.status === "up" ? "text-brand-success" : "text-brand-error"
+                    )}>
+                      {testResult.status === "up" ? "✅" : "🔴"} {testResult.message}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -259,23 +324,17 @@ export default function NewUrlMonitorPage() {
                   </label>
                   <div className="space-y-2">
                     <IntervalOption 
-                      value={600} 
+                      label="Every 5 minutes" 
+                      selected={formData.check_interval_seconds === 300}
+                      onClick={() => setFormData({ ...formData, check_interval_seconds: 300 })}
+                    />
+                    <IntervalOption 
                       label="Every 10 minutes" 
                       selected={formData.check_interval_seconds === 600}
                       onClick={() => setFormData({ ...formData, check_interval_seconds: 600 })}
                     />
                     <ProLock isLocked={!isPro}>
                       <IntervalOption 
-                        value={300} 
-                        label="Every 5 minutes" 
-                        pro
-                        selected={formData.check_interval_seconds === 300}
-                        onClick={() => setFormData({ ...formData, check_interval_seconds: 300 })}
-                      />
-                    </ProLock>
-                    <ProLock isLocked={!isPro}>
-                      <IntervalOption 
-                        value={60} 
                         label="Every 1 minute" 
                         pro
                         selected={formData.check_interval_seconds === 60}
@@ -284,7 +343,6 @@ export default function NewUrlMonitorPage() {
                     </ProLock>
                     <ProLock isLocked={!isPro}>
                       <IntervalOption 
-                        value={30} 
                         label="Every 30 seconds" 
                         pro
                         selected={formData.check_interval_seconds === 30}

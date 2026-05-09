@@ -9,6 +9,7 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitialized: boolean;
   setUser: (user: User | null) => void;
   fetchUser: () => Promise<void>;
   logout: () => void;
@@ -17,6 +18,7 @@ interface AuthState {
 
 // Helper to check if session is still valid
 const isSessionValid = () => {
+  if (typeof window === "undefined") return false;
   const token = localStorage.getItem("access_token");
   const lastActivity = localStorage.getItem("last_activity");
   
@@ -28,10 +30,18 @@ const isSessionValid = () => {
   return now - lastActiveTime < SESSION_DURATION;
 };
 
+// Initial state from localStorage to prevent flash of unauthenticated state
+const getInitialAuthState = () => {
+  if (typeof window === "undefined") return { isAuthenticated: false, user: null };
+  const token = localStorage.getItem("access_token");
+  const valid = !!token && isSessionValid();
+  return { isAuthenticated: valid, user: null };
+};
+
 export const useAuthStore = create<AuthState>((set, get) => ({
-  user: null,
-  isAuthenticated: false,
+  ...getInitialAuthState(),
   isLoading: false,
+  isInitialized: false,
   
   setUser: (user) => {
     if (user) {
@@ -56,9 +66,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!token || !isSessionValid()) {
       if (token) {
         console.log("Session expired due to inactivity");
-        get().logout();
+        await get().logout();
       } else {
-        set({ user: null, isAuthenticated: false, isLoading: false });
+        set({ user: null, isAuthenticated: false, isLoading: false, isInitialized: true });
       }
       return;
     }
@@ -73,31 +83,38 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       localStorage.setItem("last_activity", Date.now().toString());
       
       const response = await api.get("auth/me");
-      set({ user: response.data, isAuthenticated: true, isLoading: false });
+      set({ user: response.data, isAuthenticated: true, isLoading: false, isInitialized: true });
     } catch (error: any) {
       console.error("Auth verification failed:", error);
       
-      // Only log out if the server explicitly rejects the token (401/403)
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        get().logout();
+      // Only log out if the server explicitly rejects the token (401 specifically)
+      if (error.response?.status === 401) {
+        await get().logout();
       } else {
-        // For network errors, we keep the session active but stop loading
-        // This handles cases like server cold boot
-        set({ isLoading: false });
+        // For network errors or 403, we keep the session active if we have a token
+        // but stop loading and mark as initialized
+        set({ isLoading: false, isInitialized: true });
       }
     }
   },
 
-  logout: () => {
+  logout: async () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("access_token");
       localStorage.removeItem("last_activity");
-      // Check if we're not already on a public page to avoid infinite redirect loops
-      const publicPaths = ["/", "/login", "/register"];
-      if (!publicPaths.includes(window.location.pathname)) {
-        window.location.href = "/login";
-      }
+      
+      // Mark as initialized so the spinner goes away during redirect
+      set({ user: null, isAuthenticated: false, isLoading: false, isInitialized: true });
+
+      // Add a short delay before redirect so state can settle
+      setTimeout(() => {
+        const publicPaths = ["/", "/login", "/register"];
+        if (!publicPaths.includes(window.location.pathname)) {
+          window.location.href = "/login";
+        }
+      }, 200);
+    } else {
+      set({ user: null, isAuthenticated: false, isLoading: false, isInitialized: true });
     }
-    set({ user: null, isAuthenticated: false, isLoading: false });
   },
 }));

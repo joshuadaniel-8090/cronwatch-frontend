@@ -2,16 +2,22 @@ import React from "react";
 import { Lock } from "lucide-react";
 import Link from "next/link";
 import { cn } from "../../lib/utils";
+import { useAuthStore } from "../../store/useAuthStore";
 
-export const ProBadge = ({ className }: { className?: string }) => (
-  <span className={cn(
-    "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-[9px] font-bold uppercase tracking-wider",
-    className
-  )}>
-    <Lock className="w-2.5 h-2.5" />
-    Pro
-  </span>
-);
+export const ProBadge = ({ className }: { className?: string }) => {
+  const { user } = useAuthStore();
+  if (user?.plan === "pro") return null;
+
+  return (
+    <span className={cn(
+      "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-[9px] font-bold uppercase tracking-wider",
+      className
+    )}>
+      <Lock className="w-2.5 h-2.5" />
+      Pro
+    </span>
+  );
+};
 
 interface ProTooltipProps {
   children: React.ReactNode;
@@ -20,7 +26,10 @@ interface ProTooltipProps {
 }
 
 export const ProLock = ({ children, isLocked, className }: ProTooltipProps) => {
-  if (!isLocked) return <>{children}</>;
+  const { user } = useAuthStore();
+  const isActuallyLocked = isLocked && user?.plan !== "pro";
+
+  if (!isActuallyLocked) return <>{children}</>;
 
   return (
     <div className={cn("relative group cursor-not-allowed", className)}>

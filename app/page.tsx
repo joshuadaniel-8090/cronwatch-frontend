@@ -22,11 +22,7 @@ import { useAuthStore } from "../src/store/useAuthStore";
 import { motion } from "motion/react";
 
 export default function LandingPage() {
-  const { isAuthenticated, isLoading, fetchUser } = useAuthStore();
-
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+  const { isAuthenticated, isLoading } = useAuthStore();
 
   return (
     <div className="min-h-screen bg-bg-base text-white font-sans">
