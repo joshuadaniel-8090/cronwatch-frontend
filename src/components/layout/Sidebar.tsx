@@ -206,18 +206,22 @@ export const Sidebar: React.FC = () => {
                 "flex flex-col min-w-0 transition-all text-left",
                 isCollapsed && "md:opacity-0 md:w-0"
               )}>
+                {!isCollapsed && user?.plan && (
+                  <div className="mb-1">
+                    <span className={cn(
+                      "px-1.5 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-[0.1em] border transition-all",
+                      user.plan === "pro" 
+                        ? "bg-brand-primary/10 text-brand-primary border-brand-primary/20 shadow-[0_0_10px_rgba(124,58,237,0.1)]" 
+                        : "bg-white/5 text-brand-muted border-white/10 opacity-60"
+                    )}>
+                      {user.plan}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-bold text-white truncate">
                     {user?.name || user?.email?.split('@')[0]}
                   </span>
-                  {!isCollapsed && user?.plan && user.plan !== "pro" && (
-                    <span className={cn(
-                      "px-1.5 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-wider",
-                      "bg-white/5 text-brand-muted border border-white/10"
-                    )}>
-                      {user.plan}
-                    </span>
-                  )}
                 </div>
                 <span className="text-[10px] text-brand-muted truncate block font-medium opacity-60">
                   {user?.email}

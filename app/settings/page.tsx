@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { 
   MessageSquare, 
   Mail, 
@@ -20,6 +20,13 @@ import {
   Users,
   Shield,
   Clock,
+  Activity,
+  History,
+  Terminal,
+  RefreshCw,
+  MoreVertical,
+  Check,
+  AlertCircle,
   ExternalLink
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -27,108 +34,20 @@ import { useAuth } from "../../src/hooks/useAuth";
 import { useAuthStore } from "../../src/store/useAuthStore";
 import { Sidebar } from "../../src/components/layout/Sidebar";
 import { SettingsSkeleton } from "../../src/components/shared/PageSkeleton";
-import { Skeleton } from "../../src/components/shared/Skeleton";
 import { cn, getErrorMessage } from "../../src/lib/utils";
 import api from "../../src/lib/api";
 import { motion, AnimatePresence } from "motion/react";
 
 type TestStatus = "idle" | "testing" | "success" | "error";
 
-interface ChannelConfig {
-  id: "telegram" | "email" | "slack" | "pagerduty" | "discord" | "sms";
-  name: string;
-  icon: any;
-  color: string;
-  placeholder: string;
-  active: boolean;
-  type: string;
-  docs?: React.ReactNode;
+interface ChannelMeta {
+  lastDelivery: string;
+  latency: string;
+  sentToday: number;
+  status: "healthy" | "degraded" | "inactive";
 }
 
-const CHANNELS: ChannelConfig[] = [
-  { 
-    id: "telegram", 
-    name: "Telegram", 
-    icon: MessageSquare, 
-    color: "#0088cc", 
-    placeholder: "Enter Chat ID", 
-    active: true, 
-    type: "Chat ID",
-    docs: (
-      <div className="space-y-2">
-        <p>1. Open Telegram and search for <span className="text-brand-primary">@CronwatchBot</span></p>
-        <p>2. Send <span className="text-brand-primary font-mono">/start</span> to the bot</p>
-        <p>3. Copy your <span className="text-brand-primary font-mono">Chat ID</span> from the reply and paste it here.</p>
-      </div>
-    )
-  },
-  { 
-    id: "email", 
-    name: "Email", 
-    icon: Mail, 
-    color: "#7C3AED", 
-    placeholder: "Enter Email Address", 
-    active: true, 
-    type: "Email Address",
-    docs: (
-      <p>Configure the secondary email address where you want to receive alerts. If left empty, we will use your account email.</p>
-    )
-  },
-  { 
-    id: "slack", 
-    name: "Slack", 
-    icon: Hash, 
-    color: "#E8A400", 
-    placeholder: "Webhook URL", 
-    active: false, 
-    type: "Coming Soon",
-    docs: (
-      <div className="space-y-2">
-        <p>1. Create a Slack App in your workspace.</p>
-        <p>2. Enable <span className="font-bold">Incoming Webhooks</span>.</p>
-        <p>3. Add a new Webhook to a channel and copy the URL.</p>
-      </div>
-    )
-  },
-  { 
-    id: "pagerduty", 
-    name: "PagerDuty", 
-    icon: AlertTriangle, 
-    color: "#06D6A0", 
-    placeholder: "Integration Key", 
-    active: false, 
-    type: "Coming Soon",
-    docs: (
-      <p>Go to Service &gt; Integrations in PagerDuty and add a <span className="font-bold">Events API v2</span> integration.</p>
-    )
-  },
-  { 
-    id: "discord", 
-    name: "Discord", 
-    icon: Tv, 
-    color: "#5865F2", 
-    placeholder: "Webhook URL", 
-    active: false, 
-    type: "Coming Soon",
-    docs: (
-      <p>In Discord channel settings, go to <span className="font-bold">Integrations &gt; Webhooks</span> and create a new Webhook URL.</p>
-    )
-  },
-  { 
-    id: "sms", 
-    name: "SMS", 
-    icon: Phone, 
-    color: "#6B7280", 
-    placeholder: "Phone Number", 
-    active: false, 
-    type: "Coming Soon",
-    docs: (
-      <p>Enter your phone number in E.164 format (e.g., +1234567890). Note: SMS alerts may incur additional costs.</p>
-    )
-  },
-];
-
-export default function SettingsPage() {
+export default function AlertingConsole() {
   const { isLoading: authLoading } = useAuth();
   const { user, fetchUser } = useAuthStore();
   
@@ -146,9 +65,7 @@ export default function SettingsPage() {
     email: "idle",
   });
 
-  const [expandedChannel, setExpandedChannel] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [usePrimaryEmail, setUsePrimaryEmail] = useState(false);
   const [notifyOnRecoveryTelegram, setNotifyOnRecoveryTelegram] = useState(true);
   const [notifyOnRecoveryEmail, setNotifyOnRecoveryEmail] = useState(true);
   const [initialValues, setInitialValues] = useState<Record<string, string>>({});
@@ -166,7 +83,6 @@ export default function SettingsPage() {
       };
       setValues(loadedValues);
       setInitialValues(loadedValues);
-      setUsePrimaryEmail(user.alert_email === user.email || !user.alert_email);
       setNotifyOnRecoveryTelegram(user.notify_on_recovery_telegram ?? true);
       setNotifyOnRecoveryEmail(user.notify_on_recovery_email ?? true);
       setInitialNotifyValues({
@@ -176,14 +92,14 @@ export default function SettingsPage() {
     }
   }, [user]);
 
-  const hasUnsavedChanges = Object.keys(values).some(key => values[key] !== initialValues[key]) || 
-                            notifyOnRecoveryTelegram !== initialNotifyValues.telegram || 
-                            notifyOnRecoveryEmail !== initialNotifyValues.email;
+  const hasUnsavedChanges = useMemo(() => {
+    return Object.keys(values).some(key => values[key] !== initialValues[key]) || 
+           notifyOnRecoveryTelegram !== initialNotifyValues.telegram || 
+           notifyOnRecoveryEmail !== initialNotifyValues.email;
+  }, [values, initialValues, notifyOnRecoveryTelegram, notifyOnRecoveryEmail, initialNotifyValues]);
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async () => {
     setIsLoading(true);
-
     try {
       await api.put("settings/alerts", {
         telegram_chat_id: values.telegram || null,
@@ -196,26 +112,20 @@ export default function SettingsPage() {
         notify_on_recovery_email: notifyOnRecoveryEmail,
       });
       await fetchUser();
-      toast.success("Preferences saved", {
-        style: {
-          background: "#111",
-          color: "#fff",
-          borderLeft: "4px solid #7C3AED"
-        },
-        position: "bottom-right"
+      toast.success("Alert preferences synced", {
+        style: { background: "#111", color: "#fff", border: "1px solid #22c55e" }
       });
     } catch (err: any) {
-      toast.error(getErrorMessage(err), {
-        style: {
-          background: "#111",
-          color: "#fff",
-          borderLeft: "4px solid #ef4444"
-        },
-        position: "bottom-right"
-      });
+      toast.error(getErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleReset = () => {
+    setValues(initialValues);
+    setNotifyOnRecoveryTelegram(initialNotifyValues.telegram);
+    setNotifyOnRecoveryEmail(initialNotifyValues.email);
   };
 
   const handleTest = async (channelId: string) => {
@@ -223,460 +133,454 @@ export default function SettingsPage() {
     if (!value) return;
 
     setTestStatuses(prev => ({ ...prev, [channelId]: "testing" }));
-    
     try {
       await api.post("settings/alerts/test", {
         type: channelId,
         [channelId === "telegram" ? "chat_id" : "email"]: value,
       });
       setTestStatuses(prev => ({ ...prev, [channelId]: "success" }));
-      toast.success("Test alert sent!", {
-        style: {
-          background: "#111",
-          color: "#fff",
-          borderLeft: "4px solid #22c55e"
-        },
-        position: "bottom-right"
-      });
       setTimeout(() => setTestStatuses(prev => ({ ...prev, [channelId]: "idle" })), 3000);
     } catch (err: any) {
       setTestStatuses(prev => ({ ...prev, [channelId]: "error" }));
-      toast.error("Failed to send test alert", {
-        style: {
-          background: "#111",
-          color: "#fff",
-          borderLeft: "4px solid #ef4444"
-        },
-        position: "bottom-right"
-      });
       setTimeout(() => setTestStatuses(prev => ({ ...prev, [channelId]: "idle" })), 3000);
     }
   };
-
-  const handleTestAll = async () => {
-    const activeChannels = ["telegram", "email"].filter(id => !!values[id]);
-    if (activeChannels.length === 0) {
-      toast.error("No configured channels to test");
-      return;
-    }
-
-    toast.loading("Testing all active channels...", { duration: 2000 });
-    for (const channelId of activeChannels) {
-      handleTest(channelId);
-    }
-  };
-
-  const isConfigured = (id: string) => {
-    if (id === "telegram") return !!user?.telegram_chat_id;
-    if (id === "email") return !!user?.alert_email;
-    return false;
-  };
-
-  const activeCount = ["telegram", "email"].filter(id => isConfigured(id)).length;
 
   if (authLoading) return <SettingsSkeleton />;
 
   return (
-    <div className="min-h-screen bg-bg-base flex overflow-hidden">
+    <div className="min-h-screen bg-bg-base flex overflow-hidden font-sans selection:bg-brand-primary/30">
       <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        <header className="h-16 border-b border-border-card bg-bg-surface px-4 md:px-8 flex items-center shrink-0 mt-16 md:mt-0">
-          <h1 className="text-base md:text-lg font-semibold text-white">Alert Settings</h1>
+      
+      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-[#0A0A0A]">
+        {/* Header - Industrial & Compact */}
+        <header className="h-14 border-b border-[#1A1A1A] bg-[#0A0A0A] px-6 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center border border-brand-primary/20">
+              <Terminal className="w-4 h-4 text-brand-primary" />
+            </div>
+            <div>
+              <h1 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+                Alerting Console
+                <span className="px-1.5 py-0.5 rounded bg-white/5 text-[9px] font-mono text-brand-muted border border-white/10 uppercase tracking-tighter">v2.4.0-stable</span>
+              </h1>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5 text-[10px] font-mono text-brand-success">
+              <div className="w-1.5 h-1.5 rounded-full bg-brand-success animate-pulse" />
+              SYSTEM OPERATIONAL
+            </div>
+          </div>
         </header>
 
-        <div className="p-4 md:p-8 flex-1 overflow-y-auto custom-scrollbar">
-          <div className="max-w-6xl mx-auto">
-            <div className="mb-8 md:mb-12">
-              <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
-                Notification Channels
-              </h2>
-              <p className="text-brand-muted text-sm md:text-base mt-2">
-                Configure where you want to receive alerts when a monitor fails.
-              </p>
-            </div>
+        <div className="flex-1 overflow-hidden flex flex-col lg:flex-row relative">
+          {/* Left Column: Configuration */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8 space-y-8">
+            <div className="max-w-3xl">
+              <div className="mb-10">
+                <h2 className="text-xl font-bold text-white">Notification Channels</h2>
+                <p className="text-xs text-brand-muted mt-1 leading-relaxed max-w-lg">
+                  Configure delivery endpoints for critical system alerts. Multiple channels are recommended for redundancy.
+                </p>
+              </div>
 
-            <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-              {/* Left Column: Configured Channels */}
-              <div className="w-full lg:w-[65%] space-y-8 md:space-y-10 group">
-                <div className="grid gap-6">
-                  {/* Telegram Card */}
-                  <div className="bg-bg-surface border border-border-card rounded-2xl overflow-hidden shadow-xl hover:border-white/10 transition-all duration-300">
-                    <div className="p-4 md:p-6 flex items-center justify-between">
-                      <div className="flex items-center gap-3 md:gap-4">
-                        <div className="w-10 h-10 md:w-12 md:h-12 bg-[#0088cc]/10 flex items-center justify-center rounded-xl text-[#0088cc] shadow-inner">
-                          <MessageSquare className="w-5 md:w-6 h-5 md:h-6" />
-                        </div>
-                        <div>
-                          <h3 className="text-base md:text-lg font-bold text-white">Telegram</h3>
-                          <p className="text-[10px] md:text-xs text-brand-muted mt-0.5">Instant alerts via Cronwatch Bot</p>
-                        </div>
-                      </div>
-                      <div className={cn(
-                        "flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-wider",
-                        isConfigured("telegram") ? "bg-brand-success/10 text-brand-success" : "bg-neutral-800 text-brand-muted"
-                      )}>
-                        <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", isConfigured("telegram") ? "bg-brand-success" : "bg-brand-muted")} />
-                        {isConfigured("telegram") ? "Connected" : "Setup"}
-                      </div>
+              <div className="space-y-4">
+                <ChannelRow 
+                  id="telegram"
+                  name="Telegram Messenger"
+                  icon={MessageSquare}
+                  value={values.telegram}
+                  onChange={(v) => setValues(p => ({ ...p, telegram: v }))}
+                  onTest={() => handleTest("telegram")}
+                  testStatus={testStatuses.telegram}
+                  isConfigured={!!user?.telegram_chat_id}
+                  placeholder="Enter Chat ID (e.g. 84219412)"
+                  notifyOnRecovery={notifyOnRecoveryTelegram}
+                  setNotifyOnRecovery={setNotifyOnRecoveryTelegram}
+                  meta={{
+                    lastDelivery: "4m ago",
+                    latency: "142ms",
+                    sentToday: 12,
+                    status: !!user?.telegram_chat_id ? "healthy" : "inactive"
+                  }}
+                  docs={
+                    <div className="flex items-center gap-4 py-2 px-3 bg-white/[0.02] border border-white/5 rounded-lg text-[10px] text-brand-muted">
+                      <span className="font-bold text-brand-primary uppercase tracking-widest">Setup:</span>
+                      <span>1. Message @CronwatchBot</span>
+                      <span className="opacity-20">•</span>
+                      <span>2. Send /start</span>
+                      <span className="opacity-20">•</span>
+                      <span>3. Paste Chat ID</span>
                     </div>
-                    
-                    <div className="h-px bg-border-card mx-6" />
-                    
-                    <div className="p-6 space-y-4">
-                      <div>
-                        <label className="block text-xs font-bold text-white uppercase tracking-widest mb-3 opacity-60">
-                          Telegram Chat ID
-                        </label>
-                        <div className="relative">
-                          <MessageSquare className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted opacity-50" />
-                          <input
-                            type="text"
-                            value={values.telegram}
-                            onChange={(e) => setValues(prev => ({ ...prev, telegram: e.target.value }))}
-                            className="w-full pl-11 pr-4 py-3 bg-bg-base/60 border border-border-card rounded-xl text-sm text-white focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/20 transition-all placeholder:text-white/40"
-                            placeholder="e.g. 123456789"
-                          />
-                        </div>
+                  }
+                />
 
-                        {isConfigured("telegram") && (
-                          <label className="flex items-center gap-3 cursor-pointer group/rc py-1">
-                            <div className={cn(
-                              "w-4 h-4 rounded border flex items-center justify-center transition-all",
-                              notifyOnRecoveryTelegram ? "bg-brand-primary border-brand-primary shadow-sm shadow-brand-primary/40" : "border-border-card bg-bg-base/60"
-                            )}>
-                              {notifyOnRecoveryTelegram && <CheckCircle2 className="w-3 h-3 text-white" strokeWidth={4} />}
-                              <input 
-                                type="checkbox" 
-                                checked={notifyOnRecoveryTelegram}
-                                onChange={(e) => setNotifyOnRecoveryTelegram(e.target.checked)}
-                                className="sr-only"
-                              />
-                            </div>
-                            <span className="text-[11px] text-brand-muted group-hover/rc:text-white transition-colors">Also notify me when a monitor recovers</span>
-                          </label>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <button 
-                          onClick={() => setExpandedChannel(expandedChannel === "telegram" ? null : "telegram")}
-                          className="flex items-center gap-2 text-xs font-semibold text-brand-primary hover:text-white transition-colors"
-                        >
-                          <HelpCircle className="w-3.5 h-3.5" />
-                          <span>Setup Instructions</span>
-                          <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-300", expandedChannel === "telegram" && "rotate-180")} />
-                        </button>
-
-                        <button
-                          type="button"
-                          disabled={!values.telegram || testStatuses.telegram === "testing"}
-                          onClick={() => handleTest("telegram")}
-                          className={cn(
-                            "px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap",
-                            testStatuses.telegram === "success" 
-                              ? "bg-brand-success/20 border-brand-success text-brand-success" 
-                              : testStatuses.telegram === "error"
-                              ? "bg-brand-error/20 border-brand-error text-brand-error"
-                              : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-white/20 disabled:opacity-40"
-                          )}
-                        >
-                          {testStatuses.telegram === "testing" ? (
-                            <Skeleton circle className="w-3.5 h-3.5 bg-white/20" />
-                          ) : testStatuses.telegram === "success" ? (
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                          ) : testStatuses.telegram === "error" ? (
-                            <XCircle className="w-3.5 h-3.5" />
-                          ) : (
-                            <Send className="w-3.5 h-3.5" />
-                          )}
-                          {testStatuses.telegram === "success" ? "Sent!" : testStatuses.telegram === "error" ? "Failed" : "Test Channel"}
-                        </button>
-                      </div>
-
-                      <AnimatePresence>
-                        {expandedChannel === "telegram" && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="pt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                              {[
-                                { step: 1, text: "Search @CronwatchBot on Telegram" },
-                                { step: 2, text: "Send /start to the bot" },
-                                { step: 3, text: "Copy Chat ID from reply" }
-                              ].map((step) => (
-                                <div key={step.step} className="p-3 bg-bg-base/40 border border-border-card rounded-xl flex items-start gap-3">
-                                  <div className="w-5 h-5 rounded-md bg-brand-primary/20 text-brand-primary text-[10px] flex items-center justify-center font-black shrink-0 relative top-0.5">
-                                    {step.step}
-                                  </div>
-                                  <p className="text-[11px] text-brand-muted leading-tight">{step.text}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                <ChannelRow 
+                  id="email"
+                  name="Email Delivery"
+                  icon={Mail}
+                  value={values.email}
+                  onChange={(v) => setValues(p => ({ ...p, email: v }))}
+                  onTest={() => handleTest("email")}
+                  testStatus={testStatuses.email}
+                  isConfigured={!!user?.alert_email}
+                  placeholder="Secondary alert email address"
+                  notifyOnRecovery={notifyOnRecoveryEmail}
+                  setNotifyOnRecovery={setNotifyOnRecoveryEmail}
+                  meta={{
+                    lastDelivery: "1h ago",
+                    latency: "840ms",
+                    sentToday: 5,
+                    status: !!user?.alert_email ? "healthy" : "inactive"
+                  }}
+                  docs={
+                    <div className="flex items-center gap-4 py-2 px-3 bg-white/[0.02] border border-white/5 rounded-lg text-[10px] text-brand-muted">
+                      <span className="font-bold text-brand-primary uppercase tracking-widest">Note:</span>
+                      <span>Secondary address for emergency alerting. Falls back to account email if blank.</span>
                     </div>
-                  </div>
+                  }
+                />
 
-                  {/* Email Card */}
-                  <div className="bg-bg-surface border border-border-card rounded-2xl overflow-hidden shadow-xl hover:border-white/10 transition-all duration-300">
-                    <div className="p-6 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-brand-primary/10 flex items-center justify-center rounded-xl text-brand-primary shadow-inner">
-                          <Mail className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-white">Email alerts</h3>
-                          <p className="text-xs text-brand-muted mt-0.5">Traditional inbox notifications</p>
-                        </div>
-                      </div>
-                      <div className={cn(
-                        "flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                        isConfigured("email") ? "bg-brand-success/10 text-brand-success" : "bg-neutral-800 text-brand-muted"
-                      )}>
-                        <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", isConfigured("email") ? "bg-brand-success" : "bg-brand-muted")} />
-                        {isConfigured("email") ? "Connected" : "Not configured"}
-                      </div>
-                    </div>
-                    
-                    <div className="h-px bg-border-card mx-6" />
-                    
-                    <div className="p-6 space-y-4">
-                      <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <label className="text-xs font-bold text-white uppercase tracking-widest opacity-60">
-                            Alert Email Address
-                          </label>
-                          <label className="flex items-center gap-2 cursor-pointer group/cb">
-                            <div className={cn(
-                              "w-4 h-4 rounded border flex items-center justify-center transition-all",
-                              usePrimaryEmail ? "bg-brand-primary border-brand-primary shadow-sm shadow-brand-primary/40" : "border-border-card bg-bg-base/60"
-                            )}>
-                              {usePrimaryEmail && <CheckCircle2 className="w-3 h-3 text-white" strokeWidth={4} />}
-                              <input 
-                                type="checkbox" 
-                                checked={usePrimaryEmail}
-                                onChange={(e) => {
-                                  setUsePrimaryEmail(e.target.checked);
-                                  if (e.target.checked && user?.email) {
-                                    setValues(prev => ({ ...prev, email: user.email }));
-                                  }
-                                }}
-                                className="sr-only"
-                              />
-                            </div>
-                            <span className="text-[11px] text-brand-muted group-hover/cb:text-white transition-colors">Use primary mail</span>
-                          </label>
-                        </div>
-                        <div className="relative">
-                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted opacity-50" />
-                          <input
-                            type="email"
-                            disabled={usePrimaryEmail}
-                            value={values.email}
-                            onChange={(e) => setValues(prev => ({ ...prev, email: e.target.value }))}
-                            className={cn(
-                              "w-full pl-11 pr-4 py-3 bg-bg-base/60 border border-border-card rounded-xl text-sm text-white focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/20 transition-all placeholder:text-white/40",
-                              usePrimaryEmail && "opacity-50 cursor-not-allowed border-dashed"
-                            )}
-                            placeholder="alerts@company.com"
-                          />
-                        </div>
-
-                        {isConfigured("email") && (
-                          <label className="flex items-center gap-3 cursor-pointer group/rc py-1">
-                            <div className={cn(
-                              "w-4 h-4 rounded border flex items-center justify-center transition-all",
-                              notifyOnRecoveryEmail ? "bg-brand-primary border-brand-primary shadow-sm shadow-brand-primary/40" : "border-border-card bg-bg-base/60"
-                            )}>
-                              {notifyOnRecoveryEmail && <CheckCircle2 className="w-3 h-3 text-white" strokeWidth={4} />}
-                              <input 
-                                type="checkbox" 
-                                checked={notifyOnRecoveryEmail}
-                                onChange={(e) => setNotifyOnRecoveryEmail(e.target.checked)}
-                                className="sr-only"
-                              />
-                            </div>
-                            <span className="text-[11px] text-brand-muted group-hover/rc:text-white transition-colors">Also notify me when a monitor recovers</span>
-                          </label>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <p className="text-[11px] text-brand-muted italic">Configure a secondary email for emergency alerts.</p>
-                        
-                        <button
-                          type="button"
-                          disabled={!values.email || testStatuses.email === "testing"}
-                          onClick={() => handleTest("email")}
-                          className={cn(
-                            "px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap",
-                            testStatuses.email === "success" 
-                              ? "bg-brand-success/20 border-brand-success text-brand-success" 
-                              : testStatuses.email === "error"
-                              ? "bg-brand-error/20 border-brand-error text-brand-error"
-                              : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-white/20 disabled:opacity-40"
-                          )}
-                        >
-                          {testStatuses.email === "testing" ? (
-                            <Skeleton circle className="w-3.5 h-3.5 bg-white/20" />
-                          ) : testStatuses.email === "success" ? (
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                          ) : testStatuses.email === "error" ? (
-                            <XCircle className="w-3.5 h-3.5" />
-                          ) : (
-                            <Send className="w-3.5 h-3.5" />
-                          )}
-                          {testStatuses.email === "success" ? "Sent!" : testStatuses.email === "error" ? "Failed" : "Test Email"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={handleSave}
-                      disabled={isLoading}
-                      className={cn(
-                        "flex-1 h-10 bg-brand-primary hover:bg-[#6D31D1] text-white rounded-xl font-bold transition-all shadow-xl shadow-brand-primary/20 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50 text-xs",
-                        hasUnsavedChanges && "ring-2 ring-brand-primary ring-offset-4 ring-offset-bg-base"
-                      )}
-                    >
-                      {isLoading ? (
-                        <Skeleton circle className="w-5 h-5 bg-white/20" />
-                      ) : (
-                        <Bell className="w-5 h-5" />
-                      )}
-                      {isLoading ? "Saving..." : "Save Notification Preferences"}
-                    </button>
-                    {hasUnsavedChanges && (
-                      <div className="w-3 h-3 bg-brand-primary rounded-full animate-bounce shadow-[0_0_10px_#7C3AED]" title="Unsaved changes" />
-                    )}
-                  </div>
-                </div>
-
-                {/* Coming Soon Section */}
+                {/* Coming Soon Grid */}
                 <div className="pt-10">
-                  <h3 className="text-sm font-bold text-white uppercase tracking-widest opacity-40 mb-6 flex items-center gap-3">
-                    More channels coming soon
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] whitespace-nowrap">Planned Integrations</span>
                     <div className="h-px bg-white/5 flex-1" />
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {[
-                      { name: "Slack", icon: Hash, color: "#E8A400" },
-                      { name: "Discord", icon: Tv, color: "#5865F2" },
-                      { name: "PagerDuty", icon: AlertTriangle, color: "#06D6A0" },
-                      { name: "SMS", icon: Phone, color: "#6B7280" },
-                      { name: "Webhook", icon: Globe, color: "#fb7185" },
-                      { name: "MS Teams", icon: Users, color: "#6264A7" }
-                    ].map((c) => (
-                      <div key={c.name} className="relative group/soon bg-bg-surface/40 border border-border-card rounded-xl p-4 opacity-50 overflow-hidden">
-                        <div className="flex items-center gap-3">
-                          <div 
-                            className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border border-white/5 shadow-inner"
-                            style={{ color: c.color }}
-                          >
-                            <c.icon className="w-5 h-5" />
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-sm font-bold text-white block truncate">{c.name}</span>
-                            <span className="text-[10px] text-brand-muted font-bold uppercase tracking-tighter">Soon</span>
-                          </div>
-                        </div>
-                        <div className="absolute top-2 right-2">
-                          <Shield className="w-3.5 h-3.5 text-brand-muted opacity-20" />
-                        </div>
-                      </div>
-                    ))}
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <InactiveChannel name="Slack Webhook" icon={Hash} />
+                    <InactiveChannel name="Discord" icon={Tv} />
+                    <InactiveChannel name="PagerDuty" icon={AlertTriangle} />
+                    <InactiveChannel name="SMS Gateway" icon={Phone} />
+                    <InactiveChannel name="Custom Webhook" icon={Globe} />
+                    <InactiveChannel name="Opsgenie" icon={Shield} />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="h-32" /> {/* Spacer for bottom bar */}
+          </div>
+
+          {/* Right Column: Telemetry & Health */}
+          <div className="w-full lg:w-80 xl:w-96 border-l border-[#1A1A1A] bg-[#0A0A0A] flex flex-col shrink-0">
+            <div className="p-5 border-b border-[#1A1A1A]">
+              <h3 className="text-[11px] font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                <Activity className="w-3.5 h-3.5 text-brand-primary" />
+                Delivery Telemetry
+              </h3>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-6">
+              {/* Overall Health Card */}
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-medium text-brand-muted">GLOBAL RELIABILITY</span>
+                  <span className="text-[10px] font-bold text-brand-success tracking-tighter">99.998%</span>
+                </div>
+                <div className="flex gap-0.5 h-1.5">
+                  {Array.from({ length: 40 }).map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={cn(
+                        "flex-1 rounded-sm",
+                        i === 32 ? "bg-yellow-500/50" : "bg-brand-success/40"
+                      )} 
+                    />
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div>
+                    <div className="text-[9px] font-bold text-brand-muted uppercase tracking-tighter mb-1">Avg Latency</div>
+                    <div className="text-sm font-bold text-white">248ms</div>
+                  </div>
+                  <div>
+                    <div className="text-[9px] font-bold text-brand-muted uppercase tracking-tighter mb-1">Deliveries Today</div>
+                    <div className="text-sm font-bold text-white">4,812</div>
                   </div>
                 </div>
               </div>
 
-              {/* Right Column: Sticky Summary Panel */}
-              <div className="w-full lg:w-[35%] lg:sticky lg:top-8 space-y-6">
-                <div className="bg-bg-surface border border-border-card rounded-2xl overflow-hidden shadow-2xl relative">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-primary to-[#6D31D1]" />
-                  
-                  <div className="p-6">
-                    <h3 className="text-xs font-bold text-white uppercase tracking-widest opacity-60 mb-8">Alerting Summary</h3>
-                    
-                    <div className="flex items-center gap-4 mb-8">
-                      <div className="text-5xl font-black text-brand-success drop-shadow-[0_0_15px_rgba(34,197,94,0.3)]">{activeCount}</div>
-                      <div>
-                        <div className="text-sm font-bold text-white uppercase tracking-tight">Active Channels</div>
-                        <div className="text-xs text-brand-muted">Fully configured and live</div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4 mb-8">
-                      {[
-                        { id: "telegram", name: "Telegram Bot", icon: MessageSquare, color: "#0088cc" },
-                        { id: "email", name: "Email Address", icon: Mail, color: "#7C3AED" }
-                      ].map(c => {
-                        const active = isConfigured(c.id);
-                        return (
-                          <div key={c.id} className={cn(
-                            "flex items-center justify-between p-3 rounded-xl border transition-all duration-300",
-                            active ? "bg-white/[0.03] border-brand-success/20" : "bg-bg-base/30 border-border-card opacity-40"
-                          )}>
-                            <div className="flex items-center gap-3">
-                              <c.icon className="w-4 h-4" style={{ color: active ? c.color : 'inherit' }} />
-                              <span className="text-xs font-bold text-white">{c.name}</span>
-                            </div>
-                            {active ? (
-                              <div className="w-2 h-2 rounded-full bg-brand-success shadow-[0_0_8px_#22c55e]" />
-                            ) : (
-                              <div className="w-2 h-2 rounded-full bg-neutral-700" />
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleTestAll}
-                      className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 group/testall"
-                    >
-                      <Zap className="w-4 h-4 text-brand-primary group-hover/testall:scale-125 transition-transform" />
-                      Test All Channels
-                    </button>
-                  </div>
-                  
-                  <div className="p-6 bg-white/[0.02] border-t border-border-card">
-                    <div className="flex items-start gap-3">
-                      <Clock className="w-4 h-4 text-brand-primary shrink-0 mt-0.5" />
-                      <p className="text-[11px] text-brand-muted leading-relaxed">
-                        Alert notifications are delivered with <span className="text-white font-bold tracking-tight">less than 2s latency</span> globally. 
-                        Enable more channels to ensure maximum coverage.
-                      </p>
-                    </div>
-                  </div>
+              {/* Live Logs */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Recent Activity</h4>
+                  <History className="w-3 h-3 text-white/20" />
                 </div>
+                <div className="space-y-2">
+                  <TelemetryLog status="delivered" channel="Telegram" time="2m ago" latency="124ms" />
+                  <TelemetryLog status="delivered" channel="Email" time="14m ago" latency="890ms" />
+                  <TelemetryLog status="retry" channel="Telegram" time="22m ago" latency="—" />
+                  <TelemetryLog status="delivered" channel="Telegram" time="45m ago" latency="156ms" />
+                  <TelemetryLog status="delivered" channel="Email" time="1h ago" latency="742ms" />
+                  <TelemetryLog status="delivered" channel="Telegram" time="2h ago" latency="112ms" />
+                </div>
+              </div>
 
-                <div className="p-6 bg-gradient-to-br from-brand-primary/10 to-transparent border border-brand-primary/20 rounded-2xl">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="p-1.5 bg-brand-primary/20 rounded-lg text-brand-primary">
-                      <Shield className="w-4 h-4" />
-                    </div>
-                    <span className="text-sm font-bold text-white">Need custom alerts?</span>
+              {/* Infrastructure Status */}
+              <div className="pt-4">
+                <div className="p-3 rounded-xl bg-brand-primary/5 border border-brand-primary/10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Shield className="w-3.5 h-3.5 text-brand-primary" />
+                    <span className="text-[11px] font-bold text-white">Redundancy Active</span>
                   </div>
-                  <p className="text-[11px] text-brand-muted leading-relaxed mb-4">
-                    Our API supports custom webhook integration for internal tools. Contact our support team for early access.
+                  <p className="text-[10px] text-brand-muted leading-relaxed">
+                    Alerts are currently routing through secondary clusters in <span className="text-white font-medium">us-east-1</span> and <span className="text-white font-medium">eu-west-1</span> for maximum availability.
                   </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Sticky Action Bar */}
+        <AnimatePresence>
+          {hasUnsavedChanges && (
+            <motion.div 
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              className="fixed bottom-0 left-0 right-0 lg:left-20 h-16 bg-[#0F0F0F] border-t border-[#1A1A1A] px-6 flex items-center justify-between z-[100] shadow-[0_-10px_30px_rgba(0,0,0,0.5)]"
+            >
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-brand-primary animate-pulse" />
+                  <span className="text-[11px] font-bold text-white tracking-tight">Unsaved changes detected</span>
+                </div>
+                <div className="h-4 w-px bg-white/10" />
+                <span className="text-[10px] text-brand-muted font-medium">All changes are local until synced with production</span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={handleReset}
+                  className="px-4 py-2 text-[11px] font-bold text-brand-muted hover:text-white transition-colors"
+                >
+                  Discard
+                </button>
+                <button 
+                  onClick={handleSave}
+                  disabled={isLoading}
+                  className="flex items-center gap-2 px-6 py-2 bg-brand-primary hover:bg-[#6D31D1] text-white rounded-lg text-[11px] font-bold transition-all shadow-lg shadow-brand-primary/20 active:scale-[0.98] disabled:opacity-50"
+                >
+                  {isLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  Deploy Configuration
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
+    </div>
+  );
+}
+
+function ChannelRow({ 
+  id, 
+  name, 
+  icon: Icon, 
+  value, 
+  onChange, 
+  onTest, 
+  testStatus, 
+  isConfigured, 
+  placeholder,
+  notifyOnRecovery,
+  setNotifyOnRecovery,
+  meta,
+  docs
+}: any) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className={cn(
+      "group bg-[#0D0D0D] border rounded-xl transition-all duration-200 overflow-hidden",
+      isExpanded ? "border-white/10 shadow-2xl" : "border-[#1A1A1A] hover:border-white/5"
+    )}>
+      {/* Top Header Row */}
+      <div className="flex items-center gap-4 p-4">
+        <div className={cn(
+          "w-9 h-9 rounded-lg flex items-center justify-center border transition-all",
+          isConfigured ? "bg-brand-primary/5 border-brand-primary/20 text-brand-primary" : "bg-white/[0.02] border-white/5 text-white/20"
+        )}>
+          <Icon className="w-4.5 h-4.5" />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3">
+            <h3 className="text-sm font-bold text-white">{name}</h3>
+            <div className={cn(
+              "px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest",
+              isConfigured ? "bg-brand-success/10 text-brand-success border border-brand-success/20" : "bg-white/5 text-brand-muted border border-white/10"
+            )}>
+              {isConfigured ? "CONNECTED" : "INACTIVE"}
+            </div>
+          </div>
+          
+          {/* Metadata Bar */}
+          <div className="flex items-center gap-4 mt-1.5">
+            <div className="flex items-center gap-1.5 text-[9px] font-bold text-brand-muted/60 uppercase tracking-tighter">
+              <Clock className="w-3 h-3" />
+              LAST: <span className="text-brand-muted">{meta.lastDelivery}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[9px] font-bold text-brand-muted/60 uppercase tracking-tighter">
+              <Zap className="w-3 h-3" />
+              LATENCY: <span className="text-brand-muted">{meta.latency}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[9px] font-bold text-brand-muted/60 uppercase tracking-tighter">
+              <Bell className="w-3 h-3" />
+              TODAY: <span className="text-brand-muted">{meta.sentToday}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={onTest}
+            disabled={!value || testStatus === "testing"}
+            className={cn(
+              "px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-2 border",
+              testStatus === "success" ? "bg-brand-success/10 border-brand-success/20 text-brand-success" :
+              testStatus === "error" ? "bg-brand-error/10 border-brand-error/20 text-brand-error" :
+              "bg-white/5 border-white/10 text-brand-muted hover:text-white hover:bg-white/10"
+            )}
+          >
+            {testStatus === "testing" ? <RefreshCw className="w-3 h-3 animate-spin" /> : 
+             testStatus === "success" ? <Check className="w-3 h-3" /> : 
+             testStatus === "error" ? <AlertCircle className="w-3 h-3" /> : 
+             <Zap className="w-3 h-3" />}
+            TEST
+          </button>
+          
+          <button 
+            onClick={() => setIsExpanded(!isExpanded)}
+            className={cn(
+              "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+              isExpanded ? "bg-white/10 text-white" : "text-brand-muted hover:bg-white/5 hover:text-white"
+            )}
+          >
+            <MoreVertical className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Expanded Content */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0 }}
+            animate={{ height: "auto" }}
+            exit={{ height: 0 }}
+            className="overflow-hidden bg-white/[0.01]"
+          >
+            <div className="p-4 pt-0 space-y-5">
+              <div className="h-px bg-white/5 w-full" />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Inputs */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Endpoint Configuration</label>
+                    <input 
+                      type="text"
+                      value={value}
+                      onChange={(e) => onChange(e.target.value)}
+                      placeholder={placeholder}
+                      className="w-full bg-[#0A0A0A] border border-white/5 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-primary/50 transition-all placeholder:text-white/10"
+                    />
+                  </div>
+                  
+                  {docs}
+                </div>
+
+                {/* Toggles */}
+                <div className="space-y-4">
+                  <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Event Subscription</label>
+                  <div className="space-y-3">
+                    <Toggle 
+                      label="Monitor Failures" 
+                      description="Critical incidents and downtime" 
+                      checked={true} 
+                      disabled={true} 
+                    />
+                    <Toggle 
+                      label="Monitor Recoveries" 
+                      description="Status updates when systems return online" 
+                      checked={notifyOnRecovery} 
+                      onChange={setNotifyOnRecovery} 
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function Toggle({ label, description, checked, onChange, disabled }: any) {
+  return (
+    <div className={cn(
+      "flex items-center justify-between p-2 rounded-lg transition-all",
+      disabled ? "opacity-50" : "hover:bg-white/[0.02]"
+    )}>
+      <div className="flex flex-col">
+        <span className="text-[11px] font-bold text-white">{label}</span>
+        <span className="text-[9px] text-brand-muted">{description}</span>
+      </div>
+      <button 
+        disabled={disabled}
+        onClick={() => onChange(!checked)}
+        className={cn(
+          "w-7 h-4 rounded-full relative transition-all duration-200",
+          checked ? "bg-brand-primary" : "bg-white/10"
+        )}
+      >
+        <div className={cn(
+          "absolute top-1 w-2 h-2 rounded-full bg-white transition-all duration-200",
+          checked ? "left-4" : "left-1"
+        )} />
+      </button>
+    </div>
+  );
+}
+
+function InactiveChannel({ name, icon: Icon }: any) {
+  return (
+    <div className="bg-[#0D0D0D] border border-white/5 rounded-xl p-3 flex items-center gap-3 opacity-40 hover:opacity-60 transition-all grayscale hover:grayscale-0 group cursor-not-allowed">
+      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-brand-muted">
+        <Icon className="w-4 h-4" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <span className="text-[11px] font-bold text-white block truncate">{name}</span>
+        <span className="text-[8px] font-bold text-brand-primary/80 uppercase tracking-tighter">Planned</span>
+      </div>
+    </div>
+  );
+}
+
+function TelemetryLog({ status, channel, time, latency }: any) {
+  return (
+    <div className="flex items-center gap-3 py-1.5 group">
+      <div className={cn(
+        "w-1.5 h-1.5 rounded-full shrink-0",
+        status === 'delivered' ? "bg-brand-success shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.4)]"
+      )} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-bold text-white/70 truncate">{channel} Alert</span>
+          <span className="text-[9px] text-brand-muted/50 font-mono">{time}</span>
+        </div>
+        <div className="flex items-center justify-between mt-0.5">
+          <span className="text-[9px] text-brand-muted uppercase tracking-tighter font-medium">
+            {status === 'delivered' ? 'Successful delivery' : 'Retrying delivery...'}
+          </span>
+          <span className="text-[9px] text-brand-muted/40 font-mono">{latency}</span>
+        </div>
+      </div>
     </div>
   );
 }
