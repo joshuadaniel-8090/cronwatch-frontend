@@ -304,7 +304,7 @@ function MonitorRow({ monitor, onDelete, onToggle }: { monitor: UrlMonitor; onDe
                     <Edit2 className="w-4 h-4 text-brand-primary" /> Edit
                   </button>
                   <button 
-                    onClick={() => { handleToggle(monitor); setIsMenuOpen(false); }}
+                    onClick={() => { onToggle(monitor); setIsMenuOpen(false); }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all text-left"
                   >
                     {monitor.is_active ? (
