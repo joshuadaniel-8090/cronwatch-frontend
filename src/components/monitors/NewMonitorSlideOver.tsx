@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Info, Bell, Tag, AlignLeft } from "lucide-react";
+import { X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import toast from "react-hot-toast";
 import { INTERVAL_OPTIONS, GRACE_OPTIONS, cn, getErrorMessage, PLAN_LIMITS } from "../../lib/utils";
@@ -76,8 +76,8 @@ export const NewMonitorSlideOver: React.FC<MonitorModalProps> = ({
       toast.error(`Monitor limit reached. Free plan is limited to ${PLAN_LIMITS.free} monitors.`, {
         icon: "🛡️",
         style: {
-          background: "#111",
-          color: "#fff",
+          background: "var(--bg-surface)",
+          color: "var(--text-primary)",
           borderLeft: "4px solid #ef4444"
         }
       });
@@ -125,7 +125,7 @@ export const NewMonitorSlideOver: React.FC<MonitorModalProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60]"
+            className="fixed inset-0 bg-bg-base/80 backdrop-blur-sm z-[60]"
           />
 
           {/* Modal */}
@@ -133,10 +133,10 @@ export const NewMonitorSlideOver: React.FC<MonitorModalProps> = ({
             initial={{ opacity: 0, scale: 0.98, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98, y: 10 }}
-            className="relative w-full max-w-[520px] bg-[#0D0D0D] border border-[#1F1F2A] rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] z-[70] flex flex-col overflow-hidden"
+            className="relative w-full max-w-[520px] bg-bg-base border border-border-card rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] z-[70] flex flex-col overflow-hidden"
           >
-            <div className="h-14 flex items-center justify-between px-6 border-b border-[#1F1F2A] shrink-0 font-sans">
-              <h2 className="text-sm font-semibold text-white tracking-tight">
+            <div className="h-14 flex items-center justify-between px-6 border-b border-border-card shrink-0 font-sans">
+              <h2 className="text-sm font-semibold text-text-primary tracking-tight">
                 {editingMonitor ? "Edit Monitor" : "Create New Monitor"}
               </h2>
               <button 
@@ -159,8 +159,8 @@ export const NewMonitorSlideOver: React.FC<MonitorModalProps> = ({
                     onChange={(e) => setName(e.target.value)}
                     autoFocus
                     className={cn(
-                      "w-full h-11 px-4 bg-[#111111] border rounded-lg text-[13px] text-white focus:outline-none transition-all placeholder:text-zinc-700",
-                      errors.name ? "border-red-500/50" : "border-[#1F1F2A] focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
+                      "w-full h-11 px-4 bg-bg-surface border rounded-lg text-[13px] text-text-primary focus:outline-none transition-all placeholder:text-zinc-700",
+                      errors.name ? "border-red-500/50" : "border-border-card focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
                     )}
                     placeholder="e.g. Production API Heartbeat"
                   />
@@ -170,7 +170,7 @@ export const NewMonitorSlideOver: React.FC<MonitorModalProps> = ({
                 {/* URL placeholder hint for Cronwatch app context */}
                 <div className="space-y-1.5">
                   <label className="block text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Monitor URL</label>
-                  <div className="w-full h-11 px-4 bg-[#0A0A0A] border border-[#1F1F2A] rounded-lg text-[13px] text-zinc-600 flex items-center cursor-not-allowed">
+                  <div className="w-full h-11 px-4 bg-bg-base border border-border-card rounded-lg text-[13px] text-text-muted flex items-center cursor-not-allowed">
                     Unique endpoint generated after creation
                   </div>
                 </div>
@@ -182,7 +182,7 @@ export const NewMonitorSlideOver: React.FC<MonitorModalProps> = ({
                     <select
                       value={interval}
                       onChange={(e) => setInterval(Number(e.target.value))}
-                      className="w-full h-11 px-3 bg-[#111111] border border-[#1F1F2A] rounded-lg text-[13px] text-white focus:outline-none focus:border-indigo-500/50 transition-all cursor-pointer appearance-none"
+                      className="w-full h-11 px-3 bg-bg-surface border border-border-card rounded-lg text-[13px] text-text-primary focus:outline-none focus:border-indigo-500/50 transition-all cursor-pointer appearance-none"
                     >
                       {INTERVAL_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -194,7 +194,7 @@ export const NewMonitorSlideOver: React.FC<MonitorModalProps> = ({
                     <select
                       value={grace}
                       onChange={(e) => setGrace(Number(e.target.value))}
-                      className="w-full h-11 px-3 bg-[#111111] border border-[#1F1F2A] rounded-lg text-[13px] text-white focus:outline-none focus:border-indigo-500/50 transition-all cursor-pointer appearance-none"
+                      className="w-full h-11 px-3 bg-bg-surface border border-border-card rounded-lg text-[13px] text-text-primary focus:outline-none focus:border-indigo-500/50 transition-all cursor-pointer appearance-none"
                     >
                       {GRACE_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -214,7 +214,7 @@ export const NewMonitorSlideOver: React.FC<MonitorModalProps> = ({
                           "flex items-center justify-between h-11 px-4 rounded-lg border cursor-pointer transition-all",
                           alertChannel === channel 
                             ? "bg-indigo-500/5 border-indigo-500/30 text-indigo-400" 
-                            : "bg-[#111111] border-[#1F1F2A] text-zinc-400 hover:bg-[#161616]"
+                            : "bg-bg-surface border-border-card text-text-muted hover:bg-bg-subtle"
                         )}
                       >
                         <span className="text-[13px] font-medium capitalize">{channel}</span>
@@ -242,7 +242,7 @@ export const NewMonitorSlideOver: React.FC<MonitorModalProps> = ({
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-4 py-3 bg-[#111111] border border-[#1F1F2A] rounded-lg text-[13px] text-white focus:outline-none focus:border-indigo-500/50 transition-all placeholder:text-zinc-700 h-20 resize-none"
+                    className="w-full px-4 py-3 bg-bg-surface border border-border-card rounded-lg text-[13px] text-text-primary focus:outline-none focus:border-indigo-500/50 transition-all placeholder:text-zinc-700 h-20 resize-none"
                     placeholder="Briefly describe what this monitor tracks..."
                   />
                 </div>
@@ -254,14 +254,14 @@ export const NewMonitorSlideOver: React.FC<MonitorModalProps> = ({
                     type="text"
                     value={tagsInput}
                     onChange={(e) => setTagsInput(e.target.value)}
-                    className="w-full h-11 px-4 bg-[#111111] border border-[#1F1F2A] rounded-lg text-[13px] text-white focus:outline-none focus:border-indigo-500/50 transition-all placeholder:text-zinc-700"
+                    className="w-full h-11 px-4 bg-bg-surface border border-border-card rounded-lg text-[13px] text-text-primary focus:outline-none focus:border-indigo-500/50 transition-all placeholder:text-zinc-700"
                     placeholder="production, api, priority (comma separated)"
                   />
                 </div>
               </form>
             </div>
 
-            <div className="px-6 py-5 border-t border-[#1F1F2A] bg-[#0E0E0E] flex items-center justify-end gap-3 shrink-0">
+            <div className="px-6 py-5 border-t border-border-card bg-bg-base flex items-center justify-end gap-3 shrink-0">
               <button
                 type="button"
                 onClick={onClose}
@@ -273,7 +273,7 @@ export const NewMonitorSlideOver: React.FC<MonitorModalProps> = ({
                 form="monitor-form"
                 type="submit"
                 disabled={isLoading}
-                className="h-10 px-6 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[13px] font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/10 active:scale-[0.98]"
+                className="h-10 px-6 bg-indigo-600 hover:bg-indigo-500 text-text-primary rounded-lg text-[13px] font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/10 active:scale-[0.98]"
               >
                 {isLoading ? "Saving..." : editingMonitor ? "Save Changes" : "Create Monitor"}
               </button>

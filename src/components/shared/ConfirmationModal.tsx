@@ -37,7 +37,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-bg-base/60 backdrop-blur-sm"
           />
 
           {/* Modal */}
@@ -45,7 +45,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900"
+            className="relative w-full max-w-md overflow-hidden rounded-2xl bg-bg-surface shadow-2xl border border-border-card"
             id="confirmation-modal"
           >
             <div className="p-6">
@@ -59,7 +59,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 </div>
                 <button
                   onClick={onClose}
-                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="rounded-lg p-1 text-text-muted hover:bg-bg-subtle"
                   id="modal-close-btn"
                 >
                   <X className="h-5 w-5" />
@@ -67,10 +67,10 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
               </div>
 
               <div className="mb-6">
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-white" id="modal-title">
+                <h3 className="text-xl font-semibold text-text-primary" id="modal-title">
                   {title}
                 </h3>
-                <p className="mt-2 text-slate-600 dark:text-slate-400" id="modal-message">
+                <p className="mt-2 text-text-muted" id="modal-message">
                   {message}
                 </p>
               </div>
@@ -78,7 +78,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
               <div className="flex gap-3">
                 <button
                   onClick={onClose}
-                  className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                  className="flex-1 rounded-xl border border-border-card bg-bg-surface px-4 py-2.5 text-sm font-medium text-text-primary hover:bg-bg-subtle focus:outline-none focus:ring-2 focus:ring-slate-200"
                   id="modal-cancel-btn"
                 >
                   {cancelText}

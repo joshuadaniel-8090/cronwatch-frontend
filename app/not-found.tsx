@@ -7,7 +7,7 @@ import { motion } from "motion/react";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center p-6 text-[#F5F5F5]">
+    <div className="min-h-screen bg-bg-base flex flex-col items-center justify-center p-6 text-text-primary">
       <motion.div 
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -25,7 +25,7 @@ export default function NotFound() {
 
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-brand-primary hover:bg-[#6D31D1] text-white rounded-xl font-bold transition-all shadow-xl shadow-brand-primary/20 active:scale-[0.98]"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl font-bold transition-all shadow-xl shadow-brand-primary/20 active:scale-[0.98]"
         >
           <ChevronLeft className="w-4 h-4" />
           Return to Dashboard

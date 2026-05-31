@@ -38,10 +38,10 @@ export default function PublicStatusPage() {
   }, [slug]);
 
   if (isLoading) return <PublicStatusSkeleton />;
-  if (!data) return <div className="min-h-screen bg-bg-base p-8 text-white text-center">Status page not found</div>;
+  if (!data) return <div className="min-h-screen bg-bg-base p-8 text-text-primary text-center">Status page not found</div>;
 
   return (
-    <div className="min-h-screen bg-bg-base text-white flex flex-col p-4 md:p-8">
+    <div className="min-h-screen bg-bg-base text-text-primary flex flex-col p-4 md:p-8">
       <div className="max-w-4xl mx-auto w-full">
         <header className="flex items-center justify-between mb-12 py-4 border-b border-border-card">
           <div className="flex items-center gap-2">
@@ -59,7 +59,7 @@ export default function PublicStatusPage() {
           
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
             <div>
-              <h1 className="text-4xl font-bold tracking-tight mb-3 text-white">{data.name}</h1>
+              <h1 className="text-4xl font-bold tracking-tight mb-3 text-text-primary">{data.name}</h1>
               <div className="flex flex-wrap items-center gap-4 text-brand-muted">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4" />
@@ -85,13 +85,13 @@ export default function PublicStatusPage() {
             </div>
             <div className="space-y-1">
               <span className="text-xs font-bold text-brand-muted uppercase tracking-widest">Last Check-in</span>
-              <div className="text-2xl font-bold text-white">{timeAgo(data.last_ping_at)}</div>
+              <div className="text-2xl font-bold text-text-primary">{timeAgo(data.last_ping_at)}</div>
             </div>
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white">30-Day Uptime History</h3>
+              <h3 className="text-lg font-bold text-text-primary">30-Day Uptime History</h3>
               <span className="text-xs text-brand-muted">Last updated recently</span>
             </div>
             <div className="flex gap-1 sm:gap-2 h-12">

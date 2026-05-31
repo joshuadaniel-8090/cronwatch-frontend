@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Layout, Mail, Lock, User, ChevronDown, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Mail, Lock, User, ChevronDown, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import api from "../../src/lib/api";
 import { getErrorMessage } from "../../src/lib/utils";
 import { useAuthStore } from "../../src/store/useAuthStore";
@@ -53,7 +53,7 @@ export default function RegisterPage() {
         <div className="flex justify-center mb-6 sm:mb-8">
           <Link 
             href="/" 
-            className="flex items-center gap-2 text-brand-muted hover:text-white transition-colors text-sm font-medium border border-border-card px-4 py-2 rounded-full bg-bg-surface hover:bg-white/5"
+            className="flex items-center gap-2 text-brand-muted hover:text-text-primary transition-colors text-sm font-medium border border-border-card px-4 py-2 rounded-full bg-bg-surface hover:bg-bg-subtle"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Home
@@ -61,7 +61,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="bg-bg-surface border border-border-card rounded-2xl p-6 sm:p-8 shadow-xl">
-          <h1 className="text-xl sm:text-2xl font-bold text-white mb-6">Create account</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-text-primary mb-6">Create account</h1>
           
           <form onSubmit={handleSubmit} className="space-y-4 mb-6">
             <div>
@@ -73,7 +73,7 @@ export default function RegisterPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-bg-base border border-border-card rounded-lg text-white focus:outline-none focus:border-brand-primary transition-colors"
+                  className="w-full pl-10 pr-4 py-2.5 bg-bg-base border border-border-card rounded-lg text-text-primary focus:outline-none focus:border-brand-primary transition-colors"
                   placeholder="John Doe"
                 />
               </div>
@@ -88,7 +88,7 @@ export default function RegisterPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-bg-base border border-border-card rounded-lg text-white focus:outline-none focus:border-brand-primary transition-colors"
+                  className="w-full pl-10 pr-4 py-2.5 bg-bg-base border border-border-card rounded-lg text-text-primary focus:outline-none focus:border-brand-primary transition-colors"
                   placeholder="name@example.com"
                 />
               </div>
@@ -103,13 +103,13 @@ export default function RegisterPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-2.5 bg-bg-base border border-border-card rounded-lg text-white focus:outline-none focus:border-brand-primary transition-colors"
+                  className="w-full pl-10 pr-12 py-2.5 bg-bg-base border border-border-card rounded-lg text-text-primary focus:outline-none focus:border-brand-primary transition-colors"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-muted hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-muted hover:text-text-primary transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -122,7 +122,7 @@ export default function RegisterPage() {
                 <select
                   value={usageCategory}
                   onChange={(e) => setUsageCategory(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-bg-base border border-border-card rounded-lg text-white appearance-none focus:outline-none focus:border-brand-primary transition-colors cursor-pointer"
+                  className="w-full px-4 py-2.5 bg-bg-base border border-border-card rounded-lg text-text-primary appearance-none focus:outline-none focus:border-brand-primary transition-colors cursor-pointer"
                 >
                   <option value="">Select an option</option>
                   <option value="personal">Personal</option>
@@ -141,7 +141,7 @@ export default function RegisterPage() {
                 <select
                   value={referralSource}
                   onChange={(e) => setReferralSource(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-bg-base border border-border-card rounded-lg text-white appearance-none focus:outline-none focus:border-brand-primary transition-colors cursor-pointer"
+                  className="w-full px-4 py-2.5 bg-bg-base border border-border-card rounded-lg text-text-primary appearance-none focus:outline-none focus:border-brand-primary transition-colors cursor-pointer"
                 >
                   <option value="">Select an option</option>
                   <option value="x_twitter">X / Twitter</option>
@@ -160,7 +160,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-11 bg-brand-primary hover:bg-[#6D31D1] text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-brand-primary/20 text-sm"
+              className="w-full h-11 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-brand-primary/20 text-sm"
             >
               {isLoading ? "Registering..." : "Register"}
             </button>
@@ -168,7 +168,7 @@ export default function RegisterPage() {
 
           <p className="text-center text-sm text-brand-muted">
             Already have an account?{" "}
-            <Link href="/login" className="text-brand-primary hover:text-[#A78BFA] font-medium transition-colors">
+            <Link href="/login" className="text-brand-primary hover:text-brand-primary/80 font-medium transition-colors">
               Login
             </Link>
           </p>

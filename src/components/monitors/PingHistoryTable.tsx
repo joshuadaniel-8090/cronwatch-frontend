@@ -14,25 +14,25 @@ export const PingHistoryTable: React.FC<PingHistoryTableProps> = ({ pings = [] }
 
   if (pingsList.length === 0) {
     return (
-      <div className="text-center py-12 bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl text-gray-500">
+      <div className="text-center py-12 bg-bg-surface border border-border-card rounded-xl text-text-muted">
         No ping history yet.
       </div>
     );
   }
 
   return (
-    <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl overflow-hidden shadow-sm">
+    <div className="bg-bg-surface border border-border-card rounded-xl overflow-hidden shadow-sm">
       <table className="w-full text-left font-sans">
         <thead>
-          <tr className="bg-[#1F1F1F] text-[10px] md:text-xs font-bold text-brand-muted uppercase tracking-wider">
+          <tr className="bg-bg-subtle text-[10px] md:text-xs font-bold text-brand-muted uppercase tracking-wider">
             <th className="px-4 md:px-6 py-4">Received Time</th>
             <th className="px-4 md:px-6 py-4">Status</th>
             <th className="px-4 md:px-6 py-4 hidden sm:table-cell">Source</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#2A2A2A]">
+        <tbody className="divide-y divide-border-card">
           {pingsList.map((ping) => (
-            <tr key={ping.id} className="text-[11px] md:text-sm text-gray-300 hover:bg-[#252525] transition-colors">
+            <tr key={ping.id} className="text-[11px] md:text-sm text-text-primary hover:bg-bg-subtle transition-colors">
               <td className="px-4 md:px-6 py-4">
                 <span className="hidden md:inline">{format(new Date(ping.received_at), "MMM d, yyyy HH:mm:ss")}</span>
                 <span className="md:hidden">{format(new Date(ping.received_at), "MMM d, HH:mm:ss")}</span>
@@ -56,7 +56,7 @@ export const PingHistoryTable: React.FC<PingHistoryTableProps> = ({ pings = [] }
                   ) : ping.status === "success" ? "Success" : "Late"}
                 </span>
               </td>
-              <td className="px-4 md:px-6 py-4 text-gray-500 italic hidden sm:table-cell">HTTP Request</td>
+              <td className="px-4 md:px-6 py-4 text-text-muted italic hidden sm:table-cell">HTTP Request</td>
             </tr>
           ))}
         </tbody>

@@ -44,7 +44,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
       color: "text-brand-success",
     },
     waiting: {
-      bg: "bg-white/5",
+      bg: "bg-bg-subtle",
       dot: "bg-brand-muted",
       text: "Waiting",
       color: "text-brand-muted",

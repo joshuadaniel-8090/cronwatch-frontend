@@ -13,25 +13,23 @@ export const Navbar: React.FC = () => {
         <div className="w-8 h-8 bg-brand-primary rounded-lg flex items-center justify-center transition-transform group-hover:scale-105">
           <Layout className="text-white w-5 h-5" />
         </div>
-        <span className="text-xl font-bold text-white tracking-tight">Cronwatch</span>
+        <span className="text-xl font-bold text-text-primary tracking-tight">Cronwatch</span>
       </Link>
 
       <div className="flex items-center gap-4">
         {isLoading ? (
-          <div className="w-24 h-8 bg-white/5 animate-pulse rounded-md" />
+          <div className="w-24 h-8 bg-bg-subtle animate-pulse rounded-md" />
         ) : isAuthenticated ? (
           <div className="flex items-center gap-4">
             <Link
               href="/dashboard"
-              className="px-4 py-2 bg-brand-primary hover:bg-[#6D31D1] text-white rounded-md text-sm font-medium transition-colors shadow-lg shadow-brand-primary/20"
+              className="px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-md text-sm font-medium transition-colors shadow-lg shadow-brand-primary/20"
             >
               Dashboard
             </Link>
             <button
-              onClick={() => {
-                logout();
-              }}
-              className="text-xs text-brand-muted hover:text-white transition-colors flex items-center gap-2"
+              onClick={logout}
+              className="text-xs text-brand-muted hover:text-text-primary transition-colors flex items-center gap-2"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline">Logout</span>
@@ -41,13 +39,13 @@ export const Navbar: React.FC = () => {
           <>
             <Link
               href="/login"
-              className="text-sm font-medium text-text-muted hover:text-white transition-colors"
+              className="text-sm font-medium text-text-muted hover:text-text-primary transition-colors"
             >
               Sign In
             </Link>
             <Link
               href="/register"
-              className="px-4 py-2 bg-brand-primary hover:bg-[#6D31D1] text-white rounded-md text-sm font-medium transition-colors shadow-lg shadow-brand-primary/20"
+              className="px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-md text-sm font-medium transition-colors shadow-lg shadow-brand-primary/20"
             >
               Get Started
             </Link>

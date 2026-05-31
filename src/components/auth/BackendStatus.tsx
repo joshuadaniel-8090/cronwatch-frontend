@@ -36,10 +36,10 @@ export function BackendStatus() {
         "flex items-center gap-2 px-3 py-1.5 rounded-full border text-[11px] font-medium transition-all shadow-sm backdrop-blur-md",
         status === 'connected' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
         status === 'disconnected' ? "bg-red-500/10 border-red-500/20 text-red-400" :
-        "bg-white/5 border-white/10 text-brand-muted"
+        "bg-bg-subtle border-border-card text-brand-muted"
       )}>
         {status === 'checking' ? (
-          <Skeleton circle className="w-3 h-3 bg-white/20" />
+          <Skeleton circle className="w-3 h-3 bg-bg-subtle" />
         ) : status === 'connected' ? (
           <Wifi className="w-3 h-3" />
         ) : (

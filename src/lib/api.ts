@@ -15,7 +15,9 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   const fullUrl = `${config.baseURL}${config.url}`;
-  console.log(`[API Request] ${config.method?.toUpperCase()} ${fullUrl}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[API Request] ${config.method?.toUpperCase()} ${fullUrl}`);
+  }
   return config;
 });
 
@@ -30,7 +32,9 @@ api.interceptors.response.use(
   },
   (err) => {
     const fullUrl = `${err.config?.baseURL}${err.config?.url}`;
-    console.error(`[API Error] ${err.config?.method?.toUpperCase()} ${fullUrl} - Status: ${err.response?.status || "Network Error"}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error(`[API Error] ${err.config?.method?.toUpperCase()} ${fullUrl} - Status: ${err.response?.status || "Network Error"}`);
+    }
     
     if (err.response?.status === 401) {
       // Use the store's logout which handles the redirect and state cleanup

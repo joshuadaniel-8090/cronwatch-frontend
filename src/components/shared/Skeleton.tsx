@@ -8,7 +8,7 @@ export function Skeleton({ className, circle, ...props }: SkeletonProps) {
   return (
     <div
       className={cn(
-        "animate-pulse bg-white/5",
+        "animate-pulse bg-bg-subtle",
         circle ? "rounded-full" : "rounded-md",
         className
       )}

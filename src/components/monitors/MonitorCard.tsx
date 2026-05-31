@@ -18,7 +18,7 @@ export const MonitorCard: React.FC<MonitorCardProps> = ({ monitor }) => {
     >
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-white mb-1 group-hover:text-brand-primary transition-colors">
+          <h3 className="text-lg font-semibold text-text-primary mb-1 group-hover:text-brand-primary transition-colors">
             {monitor.name}
           </h3>
           <div className="flex items-center gap-2">

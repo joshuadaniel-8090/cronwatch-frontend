@@ -39,8 +39,8 @@ export const ProLock = ({ children, isLocked, className }: ProTooltipProps) => {
       <div className="absolute inset-0 z-10" />
       
       {/* Tooltip */}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-[#1A1A1A] border border-[#2F2F2F] rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-50">
-        <p className="text-[10px] text-white font-medium leading-relaxed">
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-bg-elevated border border-border-card rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-50">
+        <p className="text-[10px] text-text-primary font-medium leading-relaxed">
           This feature requires a Pro plan. Upgrade for $9/mo to unlock.
         </p>
         <Link 
@@ -49,7 +49,7 @@ export const ProLock = ({ children, isLocked, className }: ProTooltipProps) => {
         >
           Upgrade to Pro →
         </Link>
-        <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-[#2F2F2F]" />
+        <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-border-card" />
       </div>
     </div>
   );

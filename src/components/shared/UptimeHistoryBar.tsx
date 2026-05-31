@@ -23,16 +23,16 @@ export const UptimeHistoryBar = ({ days = 30, data }: UptimeHistoryBarProps) => 
             "flex-1 h-full rounded-[2px] transition-all relative group",
             item.status === "up" ? "bg-brand-success/80 hover:bg-brand-success" :
             item.status === "down" ? "bg-brand-error/80 hover:bg-brand-error" :
-            "bg-white/10 hover:bg-white/20"
+            "bg-bg-subtle hover:bg-bg-elevated"
           )}
         >
           {/* Tooltip */}
-          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-[#1A1A1A] border border-[#2F2F2F] rounded-lg shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap">
-            <p className="text-[10px] font-bold text-white">{item.date}</p>
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-bg-elevated border border-border-card rounded-lg shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap">
+            <p className="text-[10px] font-bold text-text-primary">{item.date}</p>
             <p className="text-[9px] text-brand-muted mt-1 uppercase tracking-widest">
               Uptime: <span className={cn(item.status === "up" ? "text-brand-success" : "text-brand-error")}>{item.uptime}%</span>
             </p>
-            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#2F2F2F]" />
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-border-card" />
           </div>
         </div>
       ))}

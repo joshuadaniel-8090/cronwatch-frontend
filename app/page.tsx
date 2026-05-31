@@ -25,7 +25,7 @@ export default function LandingPage() {
   const { isAuthenticated, isLoading } = useAuthStore();
 
   return (
-    <div className="min-h-screen bg-bg-base text-white font-sans">
+    <div className="min-h-screen bg-bg-base text-text-primary font-sans">
       <Navbar />
 
       {/* Hero Section */}
@@ -48,7 +48,7 @@ export default function LandingPage() {
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-6xl md:text-8xl font-bold tracking-tighter mb-8 bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-gray-500"
+            className="text-6xl md:text-8xl font-bold tracking-tighter mb-8 bg-clip-text text-transparent bg-gradient-to-b from-text-primary via-text-primary to-brand-muted"
           >
             Silent Monitoring for Serious Cron.
           </motion.h1>
@@ -69,11 +69,11 @@ export default function LandingPage() {
             className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-24"
           >
             {isLoading ? (
-              <div className="w-48 h-12 bg-white/5 animate-pulse rounded-xl" />
+              <div className="w-48 h-12 bg-bg-subtle animate-pulse rounded-xl" />
             ) : isAuthenticated ? (
               <Link
                 href="/dashboard"
-                className="px-8 h-12 bg-brand-primary border border-white/10 hover:bg-[#6D31D1] text-white rounded-xl text-base font-bold transition-all shadow-2xl shadow-brand-primary/40 flex items-center gap-2 group"
+                className="px-8 h-12 bg-brand-primary border border-brand-primary/20 hover:bg-brand-primary/90 text-white rounded-xl text-base font-bold transition-all shadow-2xl shadow-brand-primary/40 flex items-center gap-2 group"
               >
                 Go to Dashboard
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -81,7 +81,7 @@ export default function LandingPage() {
             ) : (
               <Link
                 href="/register"
-                className="px-8 h-12 bg-brand-primary border border-white/10 hover:bg-[#6D31D1] text-white rounded-xl text-base font-bold transition-all shadow-2xl shadow-brand-primary/40 flex items-center gap-2 group"
+                className="px-8 h-12 bg-brand-primary border border-brand-primary/20 hover:bg-brand-primary/90 text-white rounded-xl text-base font-bold transition-all shadow-2xl shadow-brand-primary/40 flex items-center gap-2 group"
               >
                 Start Monitoring Free
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -109,15 +109,15 @@ export default function LandingPage() {
               </div>
               <div className="p-8 font-mono text-sm md:text-base leading-relaxed">
                 <div className="flex gap-4">
-                  <span className="text-gray-700 select-none">1</span>
+                    <span className="text-text-muted/40 select-none">1</span>
                   <span><span className="text-brand-muted italic"># Append Cronwatch ping to any script</span></span>
                 </div>
                 <div className="flex gap-4">
-                  <span className="text-gray-700 select-none">2</span>
-                  <span><span className="text-white">./run_backup.sh</span> <span className="text-brand-success">&&</span> \</span>
+                  <span className="text-text-muted/40 select-none">2</span>
+                  <span><span className="text-text-primary">./run_backup.sh</span> <span className="text-brand-success">&&</span> \</span>
                 </div>
                 <div className="flex gap-4">
-                  <span className="text-gray-700 select-none">3</span>
+                  <span className="text-text-muted/40 select-none">3</span>
                   <span>  <span className="text-blue-400">curl</span> -fsS https://cronwatch.dev/ping/abc123-token</span>
                 </div>
               </div>
@@ -186,7 +186,7 @@ export default function LandingPage() {
       </section>
 
       {/* Docs Section */}
-      <section id="docs" className="py-32 bg-[#080808] border-y border-border-card">
+      <section id="docs" className="py-32 bg-bg-base border-y border-border-card">
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex flex-col lg:flex-row gap-16 items-start">
             <div className="lg:w-1/2">
@@ -232,11 +232,11 @@ export default function LandingPage() {
                   <code className="text-text-muted">
                     <span className="text-brand-success">import</span> requests<br/><br/>
                     <span className="text-brand-muted"># Your logic here</span><br/>
-                    <span className="text-white">do_important_stuff()</span><br/><br/>
+                    <span className="text-text-primary">do_important_stuff()</span><br/><br/>
                     <span className="text-brand-muted"># Ping Cronwatch to signal success</span><br/>
-                    <span className="text-white">requests.get(</span><br/>
+                    <span className="text-text-primary">requests.get(</span><br/>
                     &nbsp;&nbsp;<span className="text-brand-primary">&quot;https://cronwatch.dev/ping/token&quot;</span><br/>
-                    <span className="text-white">)</span>
+                    <span className="text-text-primary">)</span>
                   </code>
                 </pre>
               </div>
@@ -301,7 +301,7 @@ export default function LandingPage() {
                 </div>
                 <Link
                   href="/register"
-                  className={`w-full h-11 rounded-xl font-bold flex items-center justify-center transition-all ${plan.popular ? 'bg-brand-primary hover:bg-[#6D31D1] text-white shadow-xl shadow-brand-primary/20' : 'bg-bg-base border border-border-card hover:border-brand-primary text-white'}`}
+                  className={`w-full h-11 rounded-xl font-bold flex items-center justify-center transition-all ${plan.popular ? 'bg-brand-primary hover:bg-brand-primary/90 text-white shadow-xl shadow-brand-primary/20' : 'bg-bg-base border border-border-card hover:border-brand-primary text-text-primary'}`}
                 >
                   {plan.cta}
                 </Link>
@@ -319,45 +319,45 @@ export default function LandingPage() {
             <div className="col-span-1 md:col-span-1">
               <div className="flex items-center gap-2 mb-6">
                 <Activity className="text-brand-primary w-6 h-6" />
-                <span className="font-bold text-xl text-white">Cronwatch</span>
+                <span className="font-bold text-xl text-text-primary">Cronwatch</span>
               </div>
               <p className="text-sm leading-relaxed mb-6">
                 The modern dead-man&apos;s switch for background tasks, cron jobs, and infrastructure health.
               </p>
               <div className="flex gap-4">
-                <Link href="#" className="hover:text-white transition-colors"><Globe className="w-5 h-5" /></Link>
-                <Link href="#" className="hover:text-white transition-colors"><MessageSquare className="w-5 h-5" /></Link>
-                <Link href="#" className="hover:text-white transition-colors"><Shield className="w-5 h-5" /></Link>
+                <Link href="#" className="hover:text-text-primary transition-colors"><Globe className="w-5 h-5" /></Link>
+                <Link href="#" className="hover:text-text-primary transition-colors"><MessageSquare className="w-5 h-5" /></Link>
+                <Link href="#" className="hover:text-text-primary transition-colors"><Shield className="w-5 h-5" /></Link>
               </div>
             </div>
             
             <div>
-              <h4 className="text-white font-bold mb-6 uppercase text-xs tracking-widest">Product</h4>
+              <h4 className="text-text-primary font-bold mb-6 uppercase text-xs tracking-widest">Product</h4>
               <ul className="space-y-4 text-sm">
-                <li><Link href="#features" className="hover:text-white transition-colors">Features</Link></li>
-                <li><Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link></li>
-                <li><Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
-                <li><Link href="/status/test" className="hover:text-white transition-colors">Status Pages</Link></li>
+                <li><Link href="#features" className="hover:text-text-primary transition-colors">Features</Link></li>
+                <li><Link href="#pricing" className="hover:text-text-primary transition-colors">Pricing</Link></li>
+                <li><Link href="/dashboard" className="hover:text-text-primary transition-colors">Dashboard</Link></li>
+                <li><Link href="/status/test" className="hover:text-text-primary transition-colors">Status Pages</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-white font-bold mb-6 uppercase text-xs tracking-widest">Resources</h4>
+              <h4 className="text-text-primary font-bold mb-6 uppercase text-xs tracking-widest">Resources</h4>
               <ul className="space-y-4 text-sm">
-                <li><Link href="#docs" className="hover:text-white transition-colors">Documentation</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">API Reference</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Help Center</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Changelog</Link></li>
+                <li><Link href="#docs" className="hover:text-text-primary transition-colors">Documentation</Link></li>
+                <li><Link href="#" className="hover:text-text-primary transition-colors">API Reference</Link></li>
+                <li><Link href="#" className="hover:text-text-primary transition-colors">Help Center</Link></li>
+                <li><Link href="#" className="hover:text-text-primary transition-colors">Changelog</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-white font-bold mb-6 uppercase text-xs tracking-widest">Legal</h4>
+              <h4 className="text-text-primary font-bold mb-6 uppercase text-xs tracking-widest">Legal</h4>
               <ul className="space-y-4 text-sm">
-                <li><Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Terms of Service</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Security</Link></li>
-                <li><Link href="mailto:hello@cronwatch.dev" className="hover:text-white transition-colors">Contact Us</Link></li>
+                <li><Link href="#" className="hover:text-text-primary transition-colors">Privacy Policy</Link></li>
+                <li><Link href="#" className="hover:text-text-primary transition-colors">Terms of Service</Link></li>
+                <li><Link href="#" className="hover:text-text-primary transition-colors">Security</Link></li>
+                <li><Link href="mailto:hello@cronwatch.dev" className="hover:text-text-primary transition-colors">Contact Us</Link></li>
               </ul>
             </div>
           </div>

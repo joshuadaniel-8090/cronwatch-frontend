@@ -12,7 +12,7 @@ export function AuthInit({ children }: { children: React.ReactNode }) {
 
   if (!isInitialized) {
     return (
-      <div className="fixed inset-0 bg-[#080808] flex items-center justify-center z-[9999]">
+      <div className="fixed inset-0 bg-bg-base flex items-center justify-center z-[9999]">
         <div className="flex flex-col items-center gap-6">
           <div className="relative flex items-center justify-center">
             {/* The "Signal Beep" effect */}
