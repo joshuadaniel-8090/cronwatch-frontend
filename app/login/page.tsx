@@ -8,6 +8,8 @@ import api from "../../src/lib/api";
 import { getErrorMessage } from "../../src/lib/utils";
 import { useAuthStore } from "../../src/store/useAuthStore";
 import { BackendStatus } from "../../src/components/auth/BackendStatus";
+import { Input } from "../../src/components/ui/input";
+import { Button } from "../../src/components/ui/button";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -57,13 +59,13 @@ export default function LoginPage() {
             <div>
               <label className="block text-sm font-medium text-text-muted mb-1.5">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
-                <input
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted z-10" />
+                <Input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-bg-base border border-border-card rounded-lg text-text-primary focus:outline-none focus:border-brand-primary transition-colors"
+                  className="pl-10"
                   placeholder="name@example.com"
                 />
               </div>
@@ -72,13 +74,13 @@ export default function LoginPage() {
             <div>
               <label className="block text-sm font-medium text-text-muted mb-1.5">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
-                <input
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted z-10" />
+                <Input
                   type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-2.5 bg-bg-base border border-border-card rounded-lg text-text-primary focus:outline-none focus:border-brand-primary transition-colors"
+                  className="pl-10 pr-12"
                   placeholder="••••••••"
                 />
                 <button
@@ -93,13 +95,13 @@ export default function LoginPage() {
 
             {error && <div className="text-brand-error text-sm">{error}</div>}
 
-            <button
+            <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-11 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-brand-primary/20 text-sm"
+              className="w-full h-11 rounded-xl shadow-lg shadow-brand-primary/20"
             >
               {isLoading ? "Signing in..." : "Sign In"}
-            </button>
+            </Button>
           </form>
 
           <p className="text-center text-sm text-brand-muted">

@@ -14,24 +14,22 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { useAuth } from "../../src/hooks/useAuth";
-import { Sidebar } from "../../src/components/layout/Sidebar";
-import { useAuthStore } from "../../src/store/useAuthStore";
-import { Skeleton } from "../../src/components/shared/Skeleton";
-import { DashboardSkeleton } from "../../src/components/shared/PageSkeleton";
-import { NewMonitorSlideOver as MonitorModal } from "../../src/components/monitors/NewMonitorSlideOver";
-import { Monitor } from "../../src/types";
-import api from "../../src/lib/api";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/store/useAuthStore";
+import { DashboardSkeleton } from "@/components/shared/PageSkeleton";
+import { StatCard } from "@/components/shared/StatCard";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { Monitor } from "@/types";
+import api from "@/lib/api";
 import { motion } from "motion/react";
-import { cn, getErrorMessage, PLAN_LIMITS, timeAgo } from "../../src/lib/utils";
+import { cn, getErrorMessage, PLAN_LIMITS, timeAgo } from "@/lib/utils";
 
 export default function DashboardPage() {
   const { isLoading: authLoading } = useAuth();
   const { user } = useAuthStore();
   const [monitors, setMonitors] = useState<Monitor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingMonitor, setEditingMonitor] = useState<Monitor | null>(null);
 
   const safeMonitors = Array.isArray(monitors) ? monitors : [];
 
@@ -72,19 +70,13 @@ export default function DashboardPage() {
   if (authLoading || (isLoading && safeMonitors.length === 0)) return <DashboardSkeleton />;
 
   return (
-    <div className="min-h-screen bg-bg-base flex overflow-hidden">
-      <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        <header className="h-20 md:h-24 px-4 md:px-8 flex items-center justify-between shrink-0 sticky top-0 z-40 backdrop-blur-md bg-bg-base/80 mt-16 md:mt-0">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-text-primary tracking-tight">
-              Dashboard
-            </h1>
-            <p className="text-xs text-brand-muted mt-1">Overview of your cron jobs, background tasks, and recent activity</p>
-          </div>
-        </header>
+    <>
+      <AppHeader
+        title="Dashboard"
+        description="Overview of your cron jobs, background tasks, and recent activity."
+      />
 
-        <motion.div 
+      <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
@@ -116,15 +108,12 @@ export default function DashboardPage() {
                       View All <ArrowRight className="w-3 h-3" />
                     </Link>
                     <div className="h-4 w-px bg-border-card" />
-                    <button
-                      onClick={() => {
-                        setEditingMonitor(null);
-                        setIsModalOpen(true);
-                      }}
+                    <Link
+                      href="/monitors/new?type=cron"
                       className="text-[10px] font-bold text-brand-primary hover:text-brand-primary/80 uppercase tracking-widest transition-colors"
                     >
                       + New Monitor
-                    </button>
+                    </Link>
                   </div>
                 </div>
 
@@ -173,15 +162,19 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-16 bg-bg-surface/50 border border-dashed border-border-card rounded-2xl">
-                    <Zap className="w-8 h-8 text-brand-muted opacity-30 mb-3" />
-                    <p className="text-brand-muted text-sm text-center">
-                      Your monitors haven&apos;t received any pings yet.<br />
-                      <Link href="/monitors" className="text-brand-primary hover:underline font-medium">
+                  <EmptyState
+                    icon={Zap}
+                    title="No pings yet"
+                    description="Your monitors haven't received any pings yet."
+                    action={
+                      <Link
+                        href="/monitors"
+                        className="text-brand-primary hover:underline font-medium text-sm"
+                      >
                         View all monitors
                       </Link>
-                    </p>
-                  </div>
+                    }
+                  />
                 )}
               </div>
             ) : (
@@ -216,13 +209,13 @@ export default function DashboardPage() {
                           <p className="text-xs text-brand-muted leading-relaxed">If your script doesn&apos;t check in on time, we&apos;ll alert you via Telegram, email, or wherever you configure.</p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="px-6 h-11 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl font-bold transition-all shadow-lg shadow-brand-primary/20 flex items-center gap-2 text-sm"
+                      <Link
+                        href="/monitors/new?type=cron"
+                        className="px-6 h-11 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl font-bold transition-all shadow-lg shadow-brand-primary/20 flex items-center gap-2 text-sm w-fit"
                       >
                         <PlusCircle className="w-4 h-4" />
                         Create Your First Monitor
-                      </button>
+                      </Link>
                     </div>
 
                     <div className="lg:w-72 w-full bg-bg-base border border-border-card rounded-xl p-5">
@@ -241,39 +234,6 @@ export default function DashboardPage() {
             )}
           </div>
         </motion.div>
-
-        <MonitorModal 
-          isOpen={isModalOpen} 
-          onClose={() => {
-            setIsModalOpen(false);
-            setEditingMonitor(null);
-          }}
-          editingMonitor={editingMonitor}
-          currentCount={safeMonitors.length}
-          onSuccess={fetchMonitors}
-        />
-      </main>
-    </div>
-  );
-}
-
-function StatCard({ label, value, icon: Icon, color, pulse = false }: any) {
-  return (
-    <div className="bg-bg-surface p-5 rounded-2xl border border-border-card relative overflow-hidden group hover:border-border-card transition-all">
-      <div className="flex justify-between items-start relative z-10">
-        <div>
-          <p className="text-[11px] font-bold text-brand-muted uppercase tracking-widest mb-1">{label}</p>
-          <div className="flex items-center gap-2">
-            <h3 className={cn("text-3xl font-bold tracking-tight", color, pulse && "animate-pulse")}>
-              {value}
-            </h3>
-          </div>
-        </div>
-        <div className={cn("p-2.5 rounded-xl bg-bg-subtle", color)}>
-          <Icon className="w-5 h-5 opacity-80" />
-        </div>
-      </div>
-      <div className={cn("absolute -bottom-10 -right-10 w-24 h-24 blur-[60px] opacity-10 rounded-full", color.replace('text', 'bg'))} />
-    </div>
+    </>
   );
 }

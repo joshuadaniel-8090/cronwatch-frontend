@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Navbar } from "../src/components/layout/Navbar";
 import { useAuthStore } from "../src/store/useAuthStore";
+import { Button } from "../src/components/ui/button";
 import { motion } from "motion/react";
 
 export default function LandingPage() {
@@ -71,21 +72,25 @@ export default function LandingPage() {
             {isLoading ? (
               <div className="w-48 h-12 bg-bg-subtle animate-pulse rounded-xl" />
             ) : isAuthenticated ? (
-              <Link
-                href="/dashboard"
-                className="px-8 h-12 bg-brand-primary border border-brand-primary/20 hover:bg-brand-primary/90 text-white rounded-xl text-base font-bold transition-all shadow-2xl shadow-brand-primary/40 flex items-center gap-2 group"
+              <Button
+                asChild
+                className="px-8 h-12 rounded-xl border border-brand-primary/20 text-base shadow-2xl shadow-brand-primary/40 group"
               >
-                Go to Dashboard
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
+                <Link href="/dashboard">
+                  Go to Dashboard
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </Button>
             ) : (
-              <Link
-                href="/register"
-                className="px-8 h-12 bg-brand-primary border border-brand-primary/20 hover:bg-brand-primary/90 text-white rounded-xl text-base font-bold transition-all shadow-2xl shadow-brand-primary/40 flex items-center gap-2 group"
+              <Button
+                asChild
+                className="px-8 h-12 rounded-xl border border-brand-primary/20 text-base shadow-2xl shadow-brand-primary/40 group"
               >
-                Start Monitoring Free
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
+                <Link href="/register">
+                  Start Monitoring Free
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </Button>
             )}
           </motion.div>
 
@@ -299,12 +304,13 @@ export default function LandingPage() {
                     </div>
                   ))}
                 </div>
-                <Link
-                  href="/register"
-                  className={`w-full h-11 rounded-xl font-bold flex items-center justify-center transition-all ${plan.popular ? 'bg-brand-primary hover:bg-brand-primary/90 text-white shadow-xl shadow-brand-primary/20' : 'bg-bg-base border border-border-card hover:border-brand-primary text-text-primary'}`}
+                <Button
+                  asChild
+                  variant={plan.popular ? "default" : "outline"}
+                  className={`w-full h-11 rounded-xl ${plan.popular ? "shadow-xl shadow-brand-primary/20" : "hover:border-brand-primary"}`}
                 >
-                  {plan.cta}
-                </Link>
+                  <Link href="/register">{plan.cta}</Link>
+                </Button>
               </div>
             ))}
           </div>

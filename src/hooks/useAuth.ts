@@ -14,5 +14,12 @@ export const useAuth = () => {
     }
   }, [isAuthenticated, isLoading, isInitialized, router]);
 
-  return { isAuthenticated, isLoading, isInitialized };
+  // Treat "not authenticated yet" the same as "still loading". Every consumer
+  // of this hook gates its skeleton/data-fetching on isLoading, so without
+  // this an unauthenticated visitor's protected page shell (and its data
+  // fetches) would briefly mount for one render before the redirect above
+  // takes effect.
+  const effectiveLoading = isLoading || !isInitialized || !isAuthenticated;
+
+  return { isAuthenticated, isLoading: effectiveLoading, isInitialized };
 };

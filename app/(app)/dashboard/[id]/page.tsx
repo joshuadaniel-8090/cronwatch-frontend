@@ -2,18 +2,21 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, Trash2, Edit3, Terminal, Calendar, Clock, BarChart3, CheckCircle2 } from "lucide-react";
-import { useAuth } from "../../../src/hooks/useAuth";
-import { Sidebar } from "../../../src/components/layout/Sidebar";
-import { MonitorDetailSkeleton } from "../../../src/components/shared/PageSkeleton";
-import { PingHistoryTable } from "../../../src/components/monitors/PingHistoryTable";
-import { StatusBadge } from "../../../src/components/shared/StatusBadge";
-import { CopyButton } from "../../../src/components/shared/CopyButton";
-import { NewMonitorSlideOver as MonitorModal } from "../../../src/components/monitors/NewMonitorSlideOver";
-import { ConfirmationModal } from "../../../src/components/shared/ConfirmationModal";
-import { Monitor, Ping } from "../../../src/types";
-import { formatInterval, timeAgo, getErrorMessage } from "../../../src/lib/utils";
-import api from "../../../src/lib/api";
+import Link from "next/link";
+import { Trash2, Edit3, Terminal, Calendar, Clock, BarChart3, CheckCircle2, AlertTriangle } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { MonitorDetailSkeleton } from "@/components/shared/PageSkeleton";
+import { PingHistoryTable } from "@/components/monitors/PingHistoryTable";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { CopyButton } from "@/components/shared/CopyButton";
+import { EditMonitorModal } from "@/components/monitors/EditMonitorModal";
+import { ConfirmationModal } from "@/components/shared/ConfirmationModal";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { Monitor, Ping } from "@/types";
+import { formatInterval, timeAgo, getErrorMessage } from "@/lib/utils";
+import api from "@/lib/api";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 
@@ -24,7 +27,6 @@ export default function MonitorDetailPage() {
   const router = useRouter();
   const [monitor, setMonitor] = useState<Monitor | null>(null);
   const [pings, setPings] = useState<Ping[]>([]);
-  const [monitorsCount, setMonitorsCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -34,15 +36,12 @@ export default function MonitorDetailPage() {
     if (!id) return;
     setIsLoading(true);
     try {
-      const [monitorRes, pingsRes, monitorsRes] = await Promise.all([
+      const [monitorRes, pingsRes] = await Promise.all([
         api.get(`monitors/${id}`),
         api.get(`monitors/${id}/pings?limit=50`),
-        api.get("monitors"),
       ]);
       setMonitor(monitorRes.data);
       setPings(Array.isArray(pingsRes.data) ? pingsRes.data : []);
-      const monitorsData = monitorsRes.data;
-      setMonitorsCount(Array.isArray(monitorsData) ? monitorsData.length : 0);
     } catch (err: any) {
       console.error("Failed to fetch monitor details", err);
       toast.error(getErrorMessage(err));
@@ -59,15 +58,11 @@ export default function MonitorDetailPage() {
 
   const handleDelete = async () => {
     setIsDeleting(true);
-    console.log(`[UI] Attempting to delete monitor ${id}`);
     try {
-      console.log(`[UI] Triggering DELETE request for /api/monitors/${id}`);
-      const res = await api.delete(`monitors/${id}`);
-      console.log(`[UI] Delete response:`, res.data);
+      await api.delete(`monitors/${id}`);
       toast.success("Monitor deleted successfully");
       router.push("/dashboard");
     } catch (err: any) {
-      console.error("[UI] Delete failed:", err);
       toast.error(getErrorMessage(err));
     } finally {
       setIsDeleting(false);
@@ -86,27 +81,36 @@ export default function MonitorDetailPage() {
   }, [monitor]);
 
   if (authLoading || isLoading) return <MonitorDetailSkeleton />;
-  if (!monitor) return <div className="min-h-screen bg-bg-base flex"><Sidebar /><div className="p-8 text-text-primary">Monitor not found</div></div>;
+  if (!monitor)
+    return (
+      <div className="flex flex-1 items-center justify-center p-8">
+        <EmptyState
+          icon={AlertTriangle}
+          title="Monitor not found"
+          description="This monitor has been deleted or the link is incorrect."
+          action={
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-brand-primary/20 active:scale-[0.98]"
+            >
+              Back to Dashboard
+            </Link>
+          }
+        />
+      </div>
+    );
 
   return (
-    <div className="min-h-screen bg-bg-base flex overflow-hidden font-sans text-text-primary">
-      <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        <header className="h-16 md:h-20 border-b border-border-card px-4 md:px-8 flex items-center shrink-0 bg-bg-base/80 backdrop-blur-md sticky top-0 z-40 mt-16 md:mt-0">
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="flex items-center gap-2 text-xs md:text-sm text-brand-muted hover:text-text-primary mr-4 md:mr-6 transition-colors group"
-          >
-            <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            <span className="hidden xs:inline">Back to Dashboard</span>
-            <span className="xs:hidden">Back</span>
-          </button>
-          <div className="h-8 w-px bg-border-card mr-4 md:mr-6" />
-          <h1 className="text-base md:text-xl font-bold tracking-tight">Monitor Settings</h1>
-        </header>
+    <>
+      <AppHeader
+        backHref="/dashboard"
+        backLabel="Back to Dashboard"
+        title="Monitor Settings"
+        className="h-16 md:h-20"
+      />
 
         <div className="p-4 md:p-8 flex-1 overflow-y-auto custom-scrollbar">
-          <div className="max-w-[1200px] mx-auto w-full">
+          <div className="max-w-300 mx-auto w-full">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 md:mb-10">
               <div>
                 <div className="flex items-center gap-3 md:gap-4 mb-2 flex-wrap">
@@ -114,10 +118,10 @@ export default function MonitorDetailPage() {
                   <div className="relative">
                     <StatusBadge status={monitor.status} />
                     {monitor.last_ping_status === "recovery" && (
-                      <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-brand-success/10 border border-brand-success/20 text-brand-success text-[10px] font-bold animate-in fade-in zoom-in duration-300">
+                      <Badge variant="success" className="gap-1">
                         <CheckCircle2 className="w-3 h-3" />
                         Recovered
-                      </span>
+                      </Badge>
                     )}
                     {monitor.status === "failing" && (
                       <div className="absolute inset-0 bg-brand-error rounded-full animate-ping opacity-20" />
@@ -236,11 +240,10 @@ export default function MonitorDetailPage() {
           </div>
         </div>
 
-        <MonitorModal 
-          isOpen={isModalOpen} 
+        <EditMonitorModal
+          isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          editingMonitor={monitor}
-          currentCount={monitorsCount}
+          monitor={monitor}
           onSuccess={fetchData}
         />
 
@@ -253,7 +256,6 @@ export default function MonitorDetailPage() {
           message={`Are you sure you want to delete "${monitor.name}"? This action is permanent and will delete all associated heartbeat history.`}
           confirmText="Delete Permanently"
         />
-      </main>
-    </div>
+    </>
   );
 }

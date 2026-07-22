@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import {
-  ChevronLeft,
   ExternalLink,
   Edit2,
   Trash2,
@@ -22,7 +21,6 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import toast from "react-hot-toast";
 import {
   LineChart,
@@ -42,17 +40,20 @@ import {
   deleteUrlMonitor,
   updateUrlMonitor,
   getUrlMonitorAlerts,
-} from "../../../src/lib/api";
-import { UrlMonitor, UrlMonitorLog, UrlMonitorAlert } from "../../../src/types";
+  getUrlMonitorUptimeHistory,
+} from "@/lib/api";
+import { UrlMonitor, UrlMonitorLog, UrlMonitorAlert } from "@/types";
 import {
   timeAgo,
   formatInterval,
   cn,
   getErrorMessage,
-} from "../../../src/lib/utils";
-import { Sidebar } from "../../../src/components/layout/Sidebar";
-import { UrlMonitorDetailSkeleton } from "../../../src/components/shared/PageSkeleton";
-import { UptimeHistoryBar } from "../../../src/components/shared/UptimeHistoryBar";
+} from "@/lib/utils";
+import { UrlMonitorDetailSkeleton } from "@/components/shared/PageSkeleton";
+import { UptimeHistoryBar } from "@/components/shared/UptimeHistoryBar";
+import { ConfirmationModal } from "@/components/shared/ConfirmationModal";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { AppHeader } from "@/components/layout/AppHeader";
 import { motion } from "motion/react";
 
 export default function UrlMonitorDetailPage() {
@@ -65,17 +66,32 @@ export default function UrlMonitorDetailPage() {
   const [alerts, setAlerts] = useState<UrlMonitorAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [uptimeHistory, setUptimeHistory] = useState<{ date: string; uptime: number; status: "up" | "down" | "no_data" }[] | undefined>(undefined);
+  const [overallUptimePct, setOverallUptimePct] = useState<number | null>(null);
 
   const fetchData = async () => {
     try {
-      const [monitorRes, logsRes, alertsRes] = await Promise.all([
+      const [monitorRes, logsRes, alertsRes, uptimeRes] = await Promise.all([
         getUrlMonitor(id),
         getUrlMonitorLogs(id),
         getUrlMonitorAlerts(id).catch(() => ({ data: [] })),
+        getUrlMonitorUptimeHistory(id).catch(() => ({ data: null })),
       ]);
       setMonitor(monitorRes.data);
       setLogs(logsRes.data);
       setAlerts(alertsRes.data);
+
+      if (uptimeRes.data?.uptime_last_30_days) {
+        setUptimeHistory(
+          uptimeRes.data.uptime_last_30_days.map((day: { date: string; status: "up" | "down" | "waiting" }) => ({
+            date: day.date,
+            uptime: day.status === "up" ? 100 : 0,
+            status: day.status === "waiting" ? "no_data" : day.status,
+          }))
+        );
+        setOverallUptimePct(uptimeRes.data.overall_uptime_pct);
+      }
     } catch (err: any) {
       toast.error(getErrorMessage(err));
       router.push("/url-monitors");
@@ -89,7 +105,6 @@ export default function UrlMonitorDetailPage() {
   }, [id]);
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure?")) return;
     setIsDeleting(true);
     try {
       await deleteUrlMonitor(id);
@@ -98,6 +113,7 @@ export default function UrlMonitorDetailPage() {
     } catch (err: any) {
       toast.error(getErrorMessage(err));
       setIsDeleting(false);
+      setDeleteConfirmOpen(false);
     }
   };
 
@@ -155,43 +171,32 @@ export default function UrlMonitorDetailPage() {
   if (isLoading || !monitor) return <UrlMonitorDetailSkeleton />;
 
   return (
-    <div className="min-h-screen bg-bg-base flex overflow-hidden">
-      <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        <header className="h-24 px-8 flex items-center justify-between shrink-0 sticky top-0 z-40 backdrop-blur-md bg-bg-base/80 border-b border-border-card">
-          <div className="flex items-center gap-6">
-            <Link
-              href="/url-monitors"
-              className="w-10 h-10 rounded-xl bg-bg-subtle flex items-center justify-center text-brand-muted hover:text-text-primary hover:bg-bg-subtle transition-all"
+    <>
+      <AppHeader
+        backHref="/url-monitors"
+        title={
+          <span className="flex items-center gap-3">
+            {monitor.name}
+            <StatusBadge status={monitor.status} />
+          </span>
+        }
+        description={
+          <span className="flex items-center gap-2">
+            <a
+              href={monitor.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-brand-primary flex items-center gap-1.5 transition-colors"
             >
-              <ChevronLeft className="w-5 h-5" />
-            </Link>
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-text-primary tracking-tight">
-                  {monitor.name}
-                </h1>
-                <StatusBadge status={monitor.status} />
-              </div>
-              <div className="flex items-center gap-2 mt-1">
-                <a
-                  href={monitor.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-brand-muted hover:text-brand-primary flex items-center gap-1.5 transition-colors"
-                >
-                  {monitor.url}
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-                <span className="text-[10px] text-text-primary/20">•</span>
-                <span className="text-[10px] text-brand-muted">
-                  Last checked {timeAgo(monitor.last_checked_at)}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
+              {monitor.url}
+              <ExternalLink className="w-3 h-3" />
+            </a>
+            <span className="text-text-primary/20">•</span>
+            <span>Last checked {timeAgo(monitor.last_checked_at)}</span>
+          </span>
+        }
+        actions={
+          <>
             <button
               onClick={handleToggle}
               className="px-4 h-10 bg-bg-subtle hover:bg-bg-subtle text-text-primary rounded-xl text-xs font-bold transition-all flex items-center gap-2"
@@ -210,14 +215,15 @@ export default function UrlMonitorDetailPage() {
               <Edit2 className="w-4 h-4" /> Edit
             </button>
             <button
-              onClick={handleDelete}
+              onClick={() => setDeleteConfirmOpen(true)}
               disabled={isDeleting}
               className="px-4 h-10 bg-brand-error/10 hover:bg-brand-error/20 text-brand-error rounded-xl text-xs font-bold transition-all flex items-center gap-2"
             >
               <Trash2 className="w-4 h-4" /> Delete
             </button>
-          </div>
-        </header>
+          </>
+        }
+      />
 
         <div className="p-8 flex-1 overflow-y-auto custom-scrollbar">
           <div className="max-w-300 mx-auto space-y-8 pb-20">
@@ -371,10 +377,10 @@ export default function UrlMonitorDetailPage() {
                   </h3>
                 </div>
                 <div className="text-[10px] font-bold text-brand-success uppercase tracking-widest">
-                  100.0% Overall
+                  {overallUptimePct !== null ? `${overallUptimePct.toFixed(1)}% Overall` : "No data yet"}
                 </div>
               </div>
-              <UptimeHistoryBar days={30} />
+              <UptimeHistoryBar days={30} data={uptimeHistory} />
               <div className="flex items-center justify-between text-[10px] text-brand-muted font-bold uppercase tracking-widest pt-2">
                 <span>30 days ago</span>
                 <span>Today</span>
@@ -437,7 +443,7 @@ export default function UrlMonitorDetailPage() {
                               (log.response_time_ms || 0) < 500
                                 ? "text-brand-success"
                                 : (log.response_time_ms || 0) < 1500
-                                  ? "text-yellow-500"
+                                  ? "text-brand-warning"
                                   : "text-brand-error",
                             )}
                           >
@@ -508,8 +514,19 @@ export default function UrlMonitorDetailPage() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+
+      <ConfirmationModal
+        isOpen={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Monitor"
+        message="This action cannot be undone. All logs and alert history for this monitor will be permanently deleted."
+        confirmText="Delete Monitor"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={isDeleting}
+      />
+    </>
   );
 }
 
@@ -523,28 +540,6 @@ function DetailStat({ label, value, icon: Icon, color }: any) {
         <Icon className={cn("w-4 h-4 opacity-40", color)} />
       </div>
       <div className={cn("text-2xl font-bold", color)}>{value}</div>
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const isUp = status === "up";
-  return (
-    <div
-      className={cn(
-        "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider",
-        isUp
-          ? "bg-brand-success/10 text-brand-success border border-brand-success/20"
-          : "bg-brand-error/10 text-brand-error border border-brand-error/20",
-      )}
-    >
-      <div
-        className={cn(
-          "w-2 h-2 rounded-full",
-          isUp ? "bg-brand-success" : "bg-brand-error",
-        )}
-      />
-      {status}
     </div>
   );
 }

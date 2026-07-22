@@ -7,11 +7,13 @@ interface UptimeHistoryBarProps {
 }
 
 export const UptimeHistoryBar = ({ days = 30, data }: UptimeHistoryBarProps) => {
-  // Mock data if not provided
+  // No data yet (still loading, or genuinely no history) renders as neutral
+  // "no_data" placeholders — this used to silently fabricate random up/down
+  // bars here, which misrepresented real monitor uptime.
   const items = data || Array.from({ length: days }).map((_, i) => ({
     date: new Date(Date.now() - (days - 1 - i) * 86400000).toISOString().split('T')[0],
-    uptime: Math.random() > 0.1 ? 100 : 0,
-    status: Math.random() > 0.1 ? "up" : Math.random() > 0.5 ? "down" : "no_data" as any
+    uptime: 0,
+    status: "no_data" as const,
   }));
 
   return (

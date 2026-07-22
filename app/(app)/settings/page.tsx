@@ -23,13 +23,14 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { formatDistanceToNow } from "date-fns";
-import { useAuth } from "../../src/hooks/useAuth";
-import { useAuthStore } from "../../src/store/useAuthStore";
-import { Sidebar } from "../../src/components/layout/Sidebar";
-import { SettingsSkeleton } from "../../src/components/shared/PageSkeleton";
-import { ConfirmationModal } from "../../src/components/shared/ConfirmationModal";
-import { cn, getErrorMessage } from "../../src/lib/utils";
-import api from "../../src/lib/api";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/store/useAuthStore";
+import { SettingsSkeleton } from "@/components/shared/PageSkeleton";
+import { ConfirmationModal } from "@/components/shared/ConfirmationModal";
+import { Switch } from "@/components/ui/switch";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { cn, getErrorMessage } from "@/lib/utils";
+import api from "@/lib/api";
 import { motion, AnimatePresence } from "motion/react";
 
 type TestStatus = "idle" | "testing" | "success" | "error";
@@ -54,7 +55,8 @@ function formatValue(id: string, value: string): string {
 
 export default function SettingsPage() {
   const { isLoading: authLoading } = useAuth();
-  const { user, fetchUser } = useAuthStore();
+  const { user, fetchUser, logout } = useAuthStore();
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const [values, setValues] = useState<Record<string, string>>({ telegram: "", email: "" });
   const [testStatuses, setTestStatuses] = useState<Record<string, TestStatus>>({ telegram: "idle", email: "idle" });
@@ -126,13 +128,22 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDeleteAccount = useCallback(() => {
-    setDeleteConfirmOpen(false);
-    toast.success("Account deletion request submitted. We'll follow up at your email.", {
-      style: { background: "var(--bg-surface)", color: "var(--text-primary)", border: "1px solid var(--border-card)" },
-      duration: 5000,
-    });
-  }, []);
+  const handleDeleteAccount = useCallback(async () => {
+    setIsDeletingAccount(true);
+    try {
+      await api.delete("/auth/me");
+      toast.success("Account deactivated. Your data will be retained for a grace period before permanent deletion.", {
+        style: { background: "var(--bg-surface)", color: "var(--text-primary)", border: "1px solid var(--border-card)" },
+        duration: 5000,
+      });
+      await logout();
+    } catch (err: any) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsDeletingAccount(false);
+      setDeleteConfirmOpen(false);
+    }
+  }, [logout]);
 
   const initials = getInitials(user?.name, user?.email);
   const memberSince = user?.created_at
@@ -143,9 +154,7 @@ export default function SettingsPage() {
   if (authLoading) return <SettingsSkeleton />;
 
   return (
-    <div className="min-h-screen bg-bg-base flex overflow-hidden font-sans selection:bg-brand-primary/20">
-      <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-bg-base relative">
+    <div className="relative flex flex-1 flex-col min-h-0 overflow-hidden font-sans selection:bg-brand-primary/20">
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div
             className="absolute inset-0 opacity-[0.025]"
@@ -155,17 +164,18 @@ export default function SettingsPage() {
           <div className="absolute -bottom-48 -right-48 w-[500px] h-[500px] bg-brand-primary/[0.02] rounded-full blur-3xl" />
         </div>
 
-        <header className="relative z-10 h-20 md:h-24 px-6 md:px-10 flex items-center shrink-0 bg-bg-base/80 backdrop-blur-md border-b border-border-card mt-16 md:mt-0">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 flex items-center justify-center text-brand-primary shadow-sm shadow-brand-primary/5 ring-1 ring-brand-primary/10">
-              <SettingsIcon className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-xl md:text-2xl font-bold text-text-primary tracking-tight">Settings</h1>
-              <p className="text-sm text-brand-muted/70 mt-0.5">Manage your account and notification preferences.</p>
-            </div>
-          </div>
-        </header>
+        <AppHeader
+          className="relative z-10 px-6 md:px-10"
+          title={
+            <span className="flex items-center gap-4">
+              <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 flex items-center justify-center text-brand-primary shadow-sm shadow-brand-primary/5 ring-1 ring-brand-primary/10">
+                <SettingsIcon className="w-5 h-5" />
+              </span>
+              Settings
+            </span>
+          }
+          description="Manage your account and notification preferences."
+        />
 
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -173,7 +183,7 @@ export default function SettingsPage() {
           transition={{ duration: 0.4, ease: EASING }}
           className="flex-1 overflow-y-auto custom-scrollbar relative z-10"
         >
-          <div className="max-w-2xl mx-auto p-6 md:p-10 space-y-12">
+          <div className="max-w-3xl mx-auto p-6 md:p-10 space-y-12">
 
             {/* ── Section 1: Account Profile ── */}
             <section>
@@ -183,7 +193,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold text-text-primary">Account Profile</h2>
-                  <p className="text-xs text-brand-muted/60 mt-0.5">Your identity and plan details.</p>
+                  <p className="text-xs text-brand-muted mt-0.5">Your identity and plan details.</p>
                 </div>
               </div>
               <div className="h-px bg-gradient-to-r from-border-card via-border-card/50 to-transparent mb-6" />
@@ -205,7 +215,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold text-text-primary">Notification Channels</h2>
-                  <p className="text-xs text-brand-muted/60 mt-0.5">Connect delivery endpoints for real-time alerting.</p>
+                  <p className="text-xs text-brand-muted mt-0.5">Connect delivery endpoints for real-time alerting.</p>
                 </div>
               </div>
               <div className="h-px bg-gradient-to-r from-border-card via-border-card/50 to-transparent mb-6" />
@@ -241,7 +251,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold text-text-primary">Alert Behavior</h2>
-                  <p className="text-xs text-brand-muted/60 mt-0.5">Control which events trigger notifications.</p>
+                  <p className="text-xs text-brand-muted mt-0.5">Control which events trigger notifications.</p>
                 </div>
               </div>
               <div className="h-px bg-gradient-to-r from-border-card via-border-card/50 to-transparent mb-6" />
@@ -262,7 +272,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold text-text-primary">Danger Zone</h2>
-                  <p className="text-xs text-brand-muted/60 mt-0.5">Irreversible account actions.</p>
+                  <p className="text-xs text-brand-muted mt-0.5">Irreversible account actions.</p>
                 </div>
               </div>
               <div className="h-px bg-gradient-to-r from-brand-error/20 via-brand-error/10 to-transparent mb-6" />
@@ -279,7 +289,7 @@ export default function SettingsPage() {
                 animate={{ y: 0, opacity: 1, scale: 1 }}
                 exit={{ y: 80, opacity: 0, scale: 0.96 }}
                 transition={{ duration: 0.3, ease: EASING }}
-                className="sticky bottom-6 mt-8 mx-6 md:mx-auto max-w-2xl bg-bg-surface/90 backdrop-blur-xl border border-border-card rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.25)]"
+                className="sticky bottom-6 mt-8 mx-6 md:mx-auto max-w-3xl bg-bg-surface/90 backdrop-blur-xl border border-border-card rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.25)]"
               >
                 <div className="px-5 h-14 flex items-center justify-between">
                   <div className="flex items-center gap-3 min-w-0">
@@ -289,7 +299,7 @@ export default function SettingsPage() {
                     </span>
                     <span className="text-sm font-medium text-text-primary">Unsaved changes</span>
                     <div className="h-4 w-px bg-border-card" />
-                    <span className="text-xs text-brand-muted/60 hidden sm:block">Local changes not yet synced</span>
+                    <span className="text-xs text-brand-muted hidden sm:block">Local changes not yet synced</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <button onClick={handleReset}
@@ -313,12 +323,12 @@ export default function SettingsPage() {
           onClose={() => setDeleteConfirmOpen(false)}
           onConfirm={handleDeleteAccount}
           title="Delete Account"
-          message="This action cannot be undone. All monitors, alerts, and account data will be permanently deleted. Are you sure you want to proceed?"
+          message="Your account will be deactivated immediately — you'll be logged out and all your monitors will be paused. Your data is retained for a grace period before permanent deletion. Are you sure you want to proceed?"
           confirmText="Delete Account"
           cancelText="Cancel"
           type="danger"
+          isLoading={isDeletingAccount}
         />
-      </main>
     </div>
   );
 }
@@ -366,12 +376,12 @@ function ProfileCard({
               )}
             </div>
             {email && (
-              <p className="text-sm text-brand-muted/70 mt-0.5">{email}</p>
+              <p className="text-sm text-brand-muted mt-0.5">{email}</p>
             )}
           </div>
         </div>
         <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border-card">
-          <div className="flex items-center gap-1.5 text-[11px] text-brand-muted/60">
+          <div className="flex items-center gap-1.5 text-[11px] text-brand-muted">
             <Calendar className="w-3 h-3" />
             Member since {memberSince || "today"}
           </div>
@@ -400,28 +410,14 @@ function Toggle({ label, description, checked, onChange, disabled }: any) {
     )}>
       <div className="flex flex-col gap-0.5 min-w-0">
         <span className="text-xs font-medium text-text-primary">{label}</span>
-        <span className="text-[10px] text-brand-muted/60 leading-relaxed">{description}</span>
+        <span className="text-[10px] text-brand-muted leading-relaxed">{description}</span>
       </div>
-      <button
+      <Switch
+        checked={checked}
+        onCheckedChange={onChange}
         disabled={disabled}
-        onClick={() => onChange(!checked)}
-        role="switch"
-        aria-checked={checked}
         aria-label={label}
-        className={cn(
-          "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-surface",
-          checked ? "bg-brand-primary" : "bg-bg-elevated",
-          disabled && "cursor-not-allowed",
-        )}
-      >
-        <span
-          className={cn(
-            "pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200",
-            checked ? "translate-x-4" : "translate-x-0.5",
-          )}
-        />
-      </button>
+      />
     </div>
   );
 }
@@ -499,7 +495,7 @@ function ChannelCard({
             "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 transition-all",
             isConfigured
               ? "bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 text-brand-primary shadow-sm shadow-brand-primary/5 ring-1 ring-brand-primary/10"
-              : "bg-bg-subtle text-brand-muted/50 ring-1 ring-border-card",
+              : "bg-bg-subtle text-brand-muted ring-1 ring-border-card",
           )}>
             <Icon className="w-4 h-4" />
           </div>
@@ -513,7 +509,7 @@ function ChannelCard({
                     "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap max-w-[200px]",
                     isConfigured
                       ? "bg-brand-success/10 text-brand-success"
-                      : "bg-bg-subtle text-brand-muted/60",
+                      : "bg-bg-subtle text-brand-muted",
                   )}>
                     <span className={cn(
                       "w-1.5 h-1.5 rounded-full shrink-0",
@@ -526,7 +522,7 @@ function ChannelCard({
                     </span>
                   </span>
                 </div>
-                <p className="text-xs text-brand-muted/60 mt-1">{desc}</p>
+                <p className="text-xs text-brand-muted mt-1">{desc}</p>
               </div>
 
               <button
@@ -535,7 +531,7 @@ function ChannelCard({
                   "flex items-center justify-center w-9 h-9 rounded-lg transition-all border shrink-0",
                   expanded
                     ? "bg-bg-subtle text-text-primary border-border-card"
-                    : "border-transparent text-brand-muted/40 hover:bg-bg-subtle hover:text-text-primary hover:border-border-card",
+                    : "border-transparent text-brand-muted hover:bg-bg-subtle hover:text-text-primary hover:border-border-card",
                 )}
                 aria-label={expanded ? `Close ${label} settings` : `Open ${label} settings`}
                 aria-expanded={expanded}
@@ -546,7 +542,7 @@ function ChannelCard({
 
             {expanded && (
               <div className="space-y-1.5">
-                <label className="block text-[10px] font-medium text-text-primary/40 uppercase tracking-widest">
+                <label className="block text-[10px] font-medium text-brand-muted uppercase tracking-widest">
                   {inputLabel}
                 </label>
                 <input
@@ -555,17 +551,17 @@ function ChannelCard({
                   onChange={(e) => onChange(e.target.value)}
                   placeholder={placeholder}
                   className={cn(
-                    "w-full bg-bg-subtle border rounded-lg px-3.5 py-3 text-sm text-text-primary placeholder:text-brand-muted/40 transition-all",
+                    "w-full bg-bg-subtle border rounded-lg px-3.5 py-3 text-sm text-text-primary placeholder:text-brand-muted transition-all",
                     "focus:outline-none focus:border-brand-primary/30 focus:ring-2 focus:ring-brand-primary/[0.12]",
                     "hover:border-brand-primary/20",
                     isConfigured ? "border-brand-primary/10" : "border-border-card",
                   )}
                 />
                 {id === "telegram" && (
-                  <p className="text-[10px] text-brand-muted/40 mt-0.5">Chat IDs are numeric — sent by the bot when you run /start</p>
+                  <p className="text-[10px] text-brand-muted mt-0.5">Chat IDs are numeric — sent by the bot when you run /start</p>
                 )}
                 {id === "email" && (
-                  <p className="text-[10px] text-brand-muted/40 mt-0.5">Leave blank to use your account email as fallback</p>
+                  <p className="text-[10px] text-brand-muted mt-0.5">Leave blank to use your account email as fallback</p>
                 )}
               </div>
             )}
@@ -588,7 +584,7 @@ function ChannelCard({
                 <div className="grid grid-cols-1 md:grid-cols-[1.35fr_1fr] gap-5">
                   <div className="space-y-3">{setupGuide}</div>
                   <div className="space-y-3">
-                    <label className="block text-[10px] font-medium text-text-primary/40 uppercase tracking-widest">
+                    <label className="block text-[10px] font-medium text-brand-muted uppercase tracking-widest">
                       Alert Events
                     </label>
                     <div className="rounded-lg border border-border-card bg-bg-subtle/20 p-1.5 space-y-0.5">
@@ -611,7 +607,7 @@ function ChannelCard({
                 <div className="flex items-center justify-between pt-1">
                   <button
                     onClick={() => setExpanded(false)}
-                    className="text-xs font-medium text-brand-muted/60 hover:text-text-primary transition-colors"
+                    className="text-xs font-medium text-brand-muted hover:text-text-primary transition-colors"
                   >
                     Collapse
                   </button>
@@ -624,7 +620,7 @@ function ChannelCard({
                         ? "bg-brand-success/10 border-brand-success/20 text-brand-success"
                         : testStatus === "error"
                           ? "bg-brand-error/10 border-brand-error/20 text-brand-error"
-                          : "bg-bg-subtle border-border-card text-brand-muted/70 hover:text-text-primary hover:bg-bg-elevated active:scale-[0.97]",
+                          : "bg-bg-subtle border-border-card text-brand-muted hover:text-text-primary hover:bg-bg-elevated active:scale-[0.97]",
                     )}
                   >
                     {testStatus === "testing" ? (
@@ -709,10 +705,10 @@ function AlertBehaviorCard({
         <div className="mt-4 pt-4 border-t border-border-card">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Clock className="w-3.5 h-3.5 text-brand-muted/40" />
-              <span className="text-[11px] text-brand-muted/50">Digest mode (batched alerts)</span>
+              <Clock className="w-3.5 h-3.5 text-brand-muted" />
+              <span className="text-[11px] text-brand-muted">Digest mode (batched alerts)</span>
             </div>
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-bg-subtle text-brand-muted/40 text-[9px] font-medium uppercase tracking-wider">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-bg-subtle text-brand-muted text-[9px] font-medium uppercase tracking-wider">
               <BellOff className="w-2.5 h-2.5" />
               Coming soon
             </span>
@@ -733,7 +729,7 @@ function DangerCard({ onDelete }: { onDelete: () => void }) {
             <div className="flex items-center gap-2.5">
               <h3 className="text-sm font-semibold text-text-primary">Delete Account</h3>
             </div>
-            <p className="text-xs text-brand-muted/70 mt-1 leading-relaxed">
+            <p className="text-xs text-brand-muted mt-1 leading-relaxed">
               Permanently remove your account and all associated data. This includes your monitors, alert history, and personal information.
             </p>
           </div>

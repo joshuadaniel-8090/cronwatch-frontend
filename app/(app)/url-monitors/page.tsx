@@ -19,23 +19,26 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { useAuth } from "../../src/hooks/useAuth";
-import { Sidebar } from "../../src/components/layout/Sidebar";
+import { useAuth } from "@/hooks/useAuth";
 import {
   getUrlMonitors,
   deleteUrlMonitor,
   updateUrlMonitor,
-} from "../../src/lib/api";
-import { UrlMonitor } from "../../src/types";
+} from "@/lib/api";
+import { UrlMonitor } from "@/types";
 import {
   formatInterval,
   timeAgo,
   cn,
   getErrorMessage,
-} from "../../src/lib/utils";
-import { UrlMonitorsSkeleton } from "../../src/components/shared/PageSkeleton";
-import { useAuthStore } from "../../src/store/useAuthStore";
-import { ConfirmationModal } from "../../src/components/shared/ConfirmationModal";
+} from "@/lib/utils";
+import { UrlMonitorsSkeleton } from "@/components/shared/PageSkeleton";
+import { useAuthStore } from "@/store/useAuthStore";
+import { ConfirmationModal } from "@/components/shared/ConfirmationModal";
+import { StatCard } from "@/components/shared/StatCard";
+import { SearchInput } from "@/components/ui/SearchInput";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { AppHeader } from "@/components/layout/AppHeader";
 import { motion, AnimatePresence } from "motion/react";
 
 const MOTION_DELETE = { duration: 0.3, ease: "easeOut" as const };
@@ -121,41 +124,30 @@ export default function UrlMonitorsPage() {
   const isPro = user?.plan === "pro";
 
   return (
-    <div className="min-h-screen bg-bg-base flex overflow-hidden">
-      <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        <header className="h-24 px-8 flex items-center justify-between shrink-0 sticky top-0 z-40 backdrop-blur-md bg-bg-base/80 border-b border-border-card mt-16 md:mt-0">
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary tracking-tight">
-              Uptime
-            </h1>
-            <p className="text-xs text-brand-muted mt-1">
-              Real-time status of your websites and endpoints
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted group-focus-within:text-brand-primary transition-colors" />
-              <input
-                type="text"
-                placeholder="Search monitors..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-bg-subtle border border-border-card rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-brand-primary/50 transition-all w-64                                 placeholder:text-text-muted"
-              />
-            </div>
+    <>
+      <AppHeader
+        title="Uptime"
+        description="Real-time status of your websites and endpoints."
+        actions={
+          <>
+            <SearchInput
+              placeholder="Search monitors..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-64"
+            />
             <Link
-              href="/url-monitors/new"
+              href="/monitors/new?type=url"
               className="flex items-center gap-2 px-6 h-11 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-brand-primary/20 active:scale-[0.98]"
             >
               <Plus className="w-4 h-4" />
               <span>New Uptime Monitor</span>
             </Link>
-          </div>
-        </header>
+          </>
+        }
+      />
 
-        <motion.div
+      <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={MOTION_DELETE}
@@ -164,25 +156,25 @@ export default function UrlMonitorsPage() {
           <div className="max-w-300 mx-auto w-full space-y-8 pb-20">
             {/* Stats Overview Row */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <StatItem
+              <StatCard
                 label="Total Monitors"
                 value={stats.total}
                 icon={Globe}
                 color="text-brand-primary"
               />
-              <StatItem
+              <StatCard
                 label="All Up"
                 value={stats.up}
                 icon={CheckCircle2}
                 color="text-brand-success"
               />
-              <StatItem
+              <StatCard
                 label="Degraded"
                 value={stats.degraded}
                 icon={AlertTriangle}
-                color="text-yellow-500"
+                color="text-brand-warning"
               />
-              <StatItem
+              <StatCard
                 label="Down"
                 value={stats.down}
                 icon={Zap}
@@ -203,36 +195,26 @@ export default function UrlMonitorsPage() {
                   />
                 ))
               ) : searchQuery ? (
-                <div className="flex flex-col items-center justify-center py-20 bg-bg-surface border border-border-card rounded-3xl">
-                  <Search className="w-10 h-10 text-brand-muted opacity-20 mb-4" />
-                  <h3 className="text-text-primary font-bold mb-1">
-                    No matches found
-                  </h3>
-                  <p className="text-brand-muted text-xs">
-                    Try adjusting your search for &quot;{searchQuery}&quot;
-                  </p>
-                </div>
+                <EmptyState
+                  icon={Search}
+                  title="No matches found"
+                  description={`Try adjusting your search for "${searchQuery}".`}
+                />
               ) : (
-                <div className="flex flex-col items-center justify-center py-32 bg-bg-surface/50 border-2 border-dashed border-border-card rounded-4xl">
-                  <div className="w-24 h-24 bg-brand-primary/10 rounded-3xl flex items-center justify-center mb-8 border border-brand-primary/20 shadow-2xl shadow-brand-primary/5 relative">
-                    <Globe className="w-12 h-12 text-brand-primary" />
-                    <div className="absolute inset-0 bg-brand-primary/20 rounded-full animate-ping opacity-20" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-text-primary mb-3">
-                    No uptime monitors yet
-                  </h2>
-                  <p className="text-brand-muted text-center max-w-sm mb-10 leading-relaxed text-sm">
-                    Start monitoring your websites and APIs in seconds.
-                    We&apos;ll notify you instantly if anything fails.
-                  </p>
-                  <Link
-                    href="/url-monitors/new"
-                    className="px-8 h-12 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl font-bold transition-all shadow-xl shadow-brand-primary/20 flex items-center gap-3 text-sm"
-                  >
-                    <Plus className="w-5 h-5" />
-                    New Uptime Monitor
-                  </Link>
-                </div>
+                <EmptyState
+                  icon={Globe}
+                  title="No uptime monitors yet"
+                  description="Start monitoring your websites and APIs in seconds. We'll notify you instantly if anything fails."
+                  action={
+                    <Link
+                      href="/monitors/new?type=url"
+                      className="px-6 h-11 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl font-bold transition-all shadow-lg shadow-brand-primary/20 flex items-center gap-2 text-sm"
+                    >
+                      <Plus className="w-4 h-4" />
+                      New Uptime Monitor
+                    </Link>
+                  }
+                />
               )}
             </div>
           </div>
@@ -247,43 +229,7 @@ export default function UrlMonitorsPage() {
           message="Are you sure you want to delete this monitor? All history will be permanently removed."
           confirmText="Delete"
         />
-      </main>
-    </div>
-  );
-}
-
-function StatItem({ label, value, icon: Icon, color, pulse }: any) {
-  return (
-    <div className="bg-bg-surface border border-border-card rounded-2xl p-6 relative overflow-hidden group">
-      <div className="relative z-10">
-        <p className="text-[10px] font-bold text-brand-muted uppercase tracking-widest mb-2">
-          {label}
-        </p>
-        <div className="flex items-center justify-between">
-          <h4
-            className={cn(
-              "text-3xl font-bold",
-              color,
-              pulse && "animate-pulse",
-            )}
-          >
-            {value}
-          </h4>
-          <Icon
-            className={cn(
-              "w-6 h-6 opacity-40 group-hover:opacity-100 transition-opacity",
-              color,
-            )}
-          />
-        </div>
-      </div>
-      <div
-        className={cn(
-          "absolute -bottom-10 -right-10 w-24 h-24 blur-[60px] opacity-10 rounded-full transition-all group-hover:opacity-20",
-          color.replace("text", "bg"),
-        )}
-      />
-    </div>
+    </>
   );
 }
 
@@ -303,14 +249,14 @@ function MonitorRow({
   const getStatusColor = () => {
     if (monitor.status === "waiting") return "bg-brand-muted";
     if (isDown) return "bg-brand-error";
-    if (isDegraded) return "bg-yellow-500";
+    if (isDegraded) return "bg-brand-warning";
     return "bg-brand-success";
   };
 
   const getLatencyColor = (ms: number | null) => {
     if (!ms) return "text-brand-muted";
     if (ms < 500) return "text-brand-success";
-    if (ms < 1500) return "text-yellow-500";
+    if (ms < 1500) return "text-brand-warning";
     return "text-brand-error";
   };
 
@@ -403,6 +349,9 @@ function MonitorRow({
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="w-9 h-9 rounded-xl bg-bg-subtle hover:bg-bg-subtle flex items-center justify-center text-brand-muted transition-all"
+            aria-label="More actions"
+            aria-haspopup="true"
+            aria-expanded={isMenuOpen}
           >
             <MoreVertical className="w-5 h-5" />
           </button>

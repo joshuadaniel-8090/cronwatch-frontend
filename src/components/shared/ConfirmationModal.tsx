@@ -1,8 +1,17 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { AlertTriangle, X } from 'lucide-react';
+import React from "react";
+import { AlertTriangle } from "lucide-react";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalTitle,
+} from "@/components/ui/Modal";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -12,9 +21,24 @@ interface ConfirmationModalProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  type?: 'danger' | 'warning' | 'info';
+  type?: "danger" | "warning" | "info";
   isLoading?: boolean;
 }
+
+const TYPE_STYLES = {
+  danger: {
+    badge: "bg-brand-error/10 text-brand-error",
+    confirmClassName: "bg-brand-error hover:bg-brand-error/90",
+  },
+  warning: {
+    badge: "bg-brand-warning/10 text-brand-warning",
+    confirmClassName: "bg-brand-warning hover:bg-brand-warning/90",
+  },
+  info: {
+    badge: "bg-brand-primary/10 text-brand-primary",
+    confirmClassName: "",
+  },
+};
 
 export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   isOpen,
@@ -22,92 +46,46 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   onConfirm,
   title,
   message,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
-  type = 'danger',
+  confirmText = "Confirm",
+  cancelText = "Cancel",
+  type = "danger",
   isLoading = false,
 }) => {
+  const styles = TYPE_STYLES[type];
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-bg-base/60 backdrop-blur-sm"
-          />
-
-          {/* Modal */}
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            className="relative w-full max-w-md overflow-hidden rounded-2xl bg-bg-surface shadow-2xl border border-border-card"
-            id="confirmation-modal"
+    <Modal open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <ModalContent showCloseButton>
+        <ModalHeader>
+          <div
+            className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-full",
+              styles.badge,
+            )}
           >
-            <div className="p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                  type === 'danger' ? 'bg-red-100 text-red-600' : 
-                  type === 'warning' ? 'bg-amber-100 text-amber-600' : 
-                  'bg-blue-100 text-blue-600'
-                }`}>
-                  <AlertTriangle className="h-6 w-6" />
-                </div>
-                <button
-                  onClick={onClose}
-                  className="rounded-lg p-1 text-text-muted hover:bg-bg-subtle"
-                  id="modal-close-btn"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
+            <AlertTriangle className="h-5 w-5" />
+          </div>
+          <ModalTitle>{title}</ModalTitle>
+        </ModalHeader>
 
-              <div className="mb-6">
-                <h3 className="text-xl font-semibold text-text-primary" id="modal-title">
-                  {title}
-                </h3>
-                <p className="mt-2 text-text-muted" id="modal-message">
-                  {message}
-                </p>
-              </div>
+        <ModalBody>
+          <p className="text-sm text-text-muted">{message}</p>
+        </ModalBody>
 
-              <div className="flex gap-3">
-                <button
-                  onClick={onClose}
-                  className="flex-1 rounded-xl border border-border-card bg-bg-surface px-4 py-2.5 text-sm font-medium text-text-primary hover:bg-bg-subtle focus:outline-none focus:ring-2 focus:ring-slate-200"
-                  id="modal-cancel-btn"
-                >
-                  {cancelText}
-                </button>
-                <button
-                  onClick={onConfirm}
-                  disabled={isLoading}
-                  className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-red-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 ${
-                    type === 'danger' ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500' :
-                    type === 'warning' ? 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500' :
-                    'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'
-                  }`}
-                  id="modal-confirm-btn"
-                >
-                  {isLoading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Processing...
-                    </span>
-                  ) : confirmText}
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+        <ModalFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            {cancelText}
+          </Button>
+          <Button
+            type="button"
+            onClick={onConfirm}
+            disabled={isLoading}
+            className={styles.confirmClassName}
+          >
+            {isLoading ? "Processing..." : confirmText}
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 };

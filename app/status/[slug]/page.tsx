@@ -2,8 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Activity, Clock, Globe, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { Activity, Clock, Globe, ShieldCheck, Radar, ChevronLeft } from "lucide-react";
+import { motion } from "motion/react";
 import { StatusBadge } from "../../../src/components/shared/StatusBadge";
+import { UptimeHistoryBar } from "../../../src/components/shared/UptimeHistoryBar";
 import { PublicStatusSkeleton } from "../../../src/components/shared/PageSkeleton";
 import { MonitorStatus } from "../../../src/types";
 import { formatInterval, timeAgo, cn } from "../../../src/lib/utils";
@@ -38,7 +41,31 @@ export default function PublicStatusPage() {
   }, [slug]);
 
   if (isLoading) return <PublicStatusSkeleton />;
-  if (!data) return <div className="min-h-screen bg-bg-base p-8 text-text-primary text-center">Status page not found</div>;
+  if (!data)
+    return (
+      <div className="min-h-screen bg-bg-base flex flex-col items-center justify-center p-6 text-text-primary">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="w-20 h-20 bg-brand-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-brand-primary/20 shadow-2xl shadow-brand-primary/10">
+            <Radar className="w-10 h-10 text-brand-primary" />
+          </div>
+          <h1 className="text-2xl font-bold mb-4">Status Page Not Found</h1>
+          <p className="text-brand-muted max-w-xs mx-auto mb-10 leading-relaxed text-sm">
+            This status page doesn&apos;t exist or is no longer public.
+          </p>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl font-bold transition-all shadow-xl shadow-brand-primary/20 active:scale-[0.98]"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back to Home
+          </Link>
+        </motion.div>
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-bg-base text-text-primary flex flex-col p-4 md:p-8">
@@ -94,19 +121,19 @@ export default function PublicStatusPage() {
               <h3 className="text-lg font-bold text-text-primary">30-Day Uptime History</h3>
               <span className="text-xs text-brand-muted">Last updated recently</span>
             </div>
-            <div className="flex gap-1 sm:gap-2 h-12">
-              {data.uptime_last_30_days.map((day, idx) => (
-                <div
-                  key={idx}
-                  title={`${day.date}: ${day.status}`}
-                  className={cn(
-                    "flex-1 rounded-sm transition-all hover:scale-y-125 cursor-default shadow-sm",
-                    day.status === "healthy" ? "bg-brand-success" : 
-                    day.status === "failing" ? "bg-brand-error" : "bg-bg-base"
-                  )}
-                />
-              ))}
-            </div>
+            <UptimeHistoryBar
+              days={30}
+              data={data.uptime_last_30_days.map((day) => ({
+                date: day.date,
+                uptime: day.status === "healthy" ? 100 : 0,
+                status:
+                  day.status === "healthy"
+                    ? "up"
+                    : day.status === "failing"
+                      ? "down"
+                      : "no_data",
+              }))}
+            />
             <div className="flex justify-between mt-4 text-[10px] text-brand-muted uppercase font-bold tracking-widest">
               <span>30 Days Ago</span>
               <span>Today</span>

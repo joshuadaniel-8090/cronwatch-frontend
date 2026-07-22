@@ -1,7 +1,11 @@
 import axios from "axios";
 
 const getBaseUrl = () => {
-  return process.env.NEXT_PUBLIC_API_URL || "https://cronwatch-backend.onrender.com";
+  // Falls back to localhost (obviously broken if actually hit in a deployed
+  // build) rather than a specific developer's Render URL, so a missing
+  // NEXT_PUBLIC_API_URL in a real deployment fails loudly instead of quietly
+  // talking to someone else's backend.
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 };
 
 const api = axios.create({
@@ -21,7 +25,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Only redirect on 401 — do NOT clear token here (useAuthStore owns that)
 api.interceptors.response.use(
   (res) => {
     // Update last activity on successful requests
@@ -31,17 +34,32 @@ api.interceptors.response.use(
     return res;
   },
   (err) => {
-    const fullUrl = `${err.config?.baseURL}${err.config?.url}`;
     if (process.env.NODE_ENV !== 'production') {
-      console.error(`[API Error] ${err.config?.method?.toUpperCase()} ${fullUrl} - Status: ${err.response?.status || "Network Error"}`);
+      const fullUrl = `${err.config?.baseURL}${err.config?.url}`;
+      const status = err.response?.status;
+      // "silent" requests (e.g. the backend-connectivity ping in AuthInit/
+      // BackendStatus) deliberately hit an authenticated endpoint with no
+      // token just to see if anything answers — a 401/403 there is expected
+      // and already handled by the caller, not a real error worth logging.
+      if (!err.config?.silent && (!status || status !== 401)) {
+        console.error(`[API Error] ${err.config?.method?.toUpperCase()} ${fullUrl} - Status: ${status || "Network Error"}`);
+      }
     }
-    
-    if (err.response?.status === 401) {
-      // Use the store's logout which handles the redirect and state cleanup
-      const { useAuthStore } = require("../store/useAuthStore");
-      useAuthStore.getState().logout();
+
+    // Global 401 handling: an expired/revoked token used to just surface a
+    // generic "failed to fetch" toast forever with no way out. Don't force
+    // this on the login/register calls themselves — a wrong password there
+    // is an expected 401, not a session expiry.
+    const url: string = err.config?.url || "";
+    const isAuthEndpoint = url.includes("/auth/login") || url.includes("/auth/register");
+    if (err.response?.status === 401 && !isAuthEndpoint && typeof window !== "undefined") {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("last_activity");
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
-    
+
     return Promise.reject(err);
   }
 );
@@ -58,4 +76,8 @@ export const getUrlMonitorLogs = (id: string, page = 1) =>
   api.get(`/url-monitors/${id}/logs?page=${page}&limit=50`);
 export const getUrlMonitorAlerts = (id: string) => api.get(`/url-monitors/${id}/alerts`);
 export const testUrlMonitor = (url: string) => api.post("/url-monitors/test", { url });
+export const getUrlMonitorUptimeHistory = (id: string) => api.get(`/url-monitors/${id}/uptime-history`);
+
+// Account
+export const deleteAccount = () => api.delete("/auth/me");
 

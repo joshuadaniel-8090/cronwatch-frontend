@@ -13,6 +13,7 @@ import toast from "react-hot-toast";
 import { Monitor } from "../../types";
 import { formatInterval, timeAgo, cn } from "../../lib/utils";
 import { motion, AnimatePresence } from "motion/react";
+import { Badge } from "../ui/badge";
 
 interface MonitorTableProps {
   monitors: Monitor[];
@@ -38,7 +39,7 @@ export const MonitorTable: React.FC<MonitorTableProps> = ({
     if (value === "N/A") return "bg-bg-subtle";
     const percentage = parseFloat(value);
     if (percentage >= 95) return "bg-brand-success";
-    if (percentage >= 80) return "bg-yellow-500";
+    if (percentage >= 80) return "bg-brand-warning";
     return "bg-brand-error";
   };
 
@@ -97,10 +98,10 @@ export const MonitorTable: React.FC<MonitorTableProps> = ({
                       {monitor.name}
                     </span>
                     {monitor.last_ping_status === "recovery" && (
-                      <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-brand-success/10 border border-brand-success/20 text-brand-success text-[10px] font-bold animate-in fade-in zoom-in duration-300">
+                      <Badge variant="success" className="gap-1">
                         <CheckCircle2 className="w-3 h-3" />
                         Recovered
-                      </span>
+                      </Badge>
                     )}
                   </div>
 
@@ -185,7 +186,7 @@ export const MonitorTable: React.FC<MonitorTableProps> = ({
                             : relNum >= 95
                               ? "text-brand-success"
                               : relNum >= 80
-                                ? "text-yellow-500"
+                                ? "text-brand-warning"
                                 : "text-brand-error",
                         )}
                       >
@@ -276,10 +277,10 @@ export const MonitorTable: React.FC<MonitorTableProps> = ({
                           {monitor.name}
                         </div>
                         {monitor.last_ping_status === "recovery" && (
-                          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-brand-success/10 border border-brand-success/20 text-brand-success text-[10px] font-bold">
+                          <Badge variant="success" className="gap-1">
                             <CheckCircle2 className="w-3 h-3" />
                             Recovered
-                          </span>
+                          </Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-1.5 text-[10px] text-brand-muted font-mono mt-0.5">
@@ -319,7 +320,7 @@ export const MonitorTable: React.FC<MonitorTableProps> = ({
                               : relNum >= 95
                                 ? "text-brand-success"
                                 : relNum >= 80
-                                  ? "text-yellow-500"
+                                  ? "text-brand-warning"
                                   : "text-brand-error",
                           )}
                         >
@@ -351,6 +352,7 @@ export const MonitorTable: React.FC<MonitorTableProps> = ({
                         href={`/dashboard/${monitor.id}`}
                         className="p-2 text-brand-muted hover:text-text-primary hover:bg-bg-subtle rounded-xl transition-all"
                         title="View Details"
+                        aria-label="View Details"
                       >
                         <Activity className="w-4 h-4" />
                       </Link>
@@ -362,6 +364,7 @@ export const MonitorTable: React.FC<MonitorTableProps> = ({
                         }}
                         className="p-2 text-brand-muted hover:text-text-primary hover:bg-bg-subtle rounded-xl transition-all"
                         title="Edit Monitor"
+                        aria-label="Edit Monitor"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
@@ -375,6 +378,7 @@ export const MonitorTable: React.FC<MonitorTableProps> = ({
                         }}
                         className="p-2 text-brand-muted hover:text-brand-error hover:bg-brand-error/5 rounded-xl transition-all"
                         title="Delete Monitor"
+                        aria-label="Delete Monitor"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

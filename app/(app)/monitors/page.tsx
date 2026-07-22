@@ -3,26 +3,29 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Plus,
-  Search,
   Radar,
   Activity,
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { useAuth } from "../../src/hooks/useAuth";
-import { Sidebar } from "../../src/components/layout/Sidebar";
-import { useAuthStore } from "../../src/store/useAuthStore";
-import { Skeleton } from "../../src/components/shared/Skeleton";
-import { MonitorsSkeleton } from "../../src/components/shared/PageSkeleton";
-import { MonitorTable } from "../../src/components/monitors/MonitorTable";
-import { NewMonitorSlideOver as MonitorModal } from "../../src/components/monitors/NewMonitorSlideOver";
-import { ConfirmationModal } from "../../src/components/shared/ConfirmationModal";
-import { Monitor } from "../../src/types";
-import api from "../../src/lib/api";
+import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/store/useAuthStore";
+import { Skeleton } from "@/components/shared/Skeleton";
+import { MonitorsSkeleton } from "@/components/shared/PageSkeleton";
+import { MonitorTable } from "@/components/monitors/MonitorTable";
+import { EditMonitorModal } from "@/components/monitors/EditMonitorModal";
+import { ConfirmationModal } from "@/components/shared/ConfirmationModal";
+import { StatCard } from "@/components/shared/StatCard";
+import { SearchInput } from "@/components/ui/SearchInput";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { Monitor } from "@/types";
+import api from "@/lib/api";
 
 import { motion } from "motion/react";
-import { cn, getErrorMessage } from "../../src/lib/utils";
+import { cn, getErrorMessage } from "@/lib/utils";
 
 type FilterStatus = "all" | "healthy" | "failing" | "paused";
 type SortOption = "last_ping" | "uptime" | "name";
@@ -155,44 +158,30 @@ export default function MonitorsPage() {
     return <MonitorsSkeleton />;
 
   return (
-    <div className="min-h-screen bg-bg-base flex overflow-hidden">
-      <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        <header className="h-20 md:h-24 px-4 md:px-8 flex items-center justify-between shrink-0 sticky top-0 z-40 backdrop-blur-md bg-bg-base/80 border-b border-border-card">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-text-primary tracking-tight">
-              Monitor Management
-            </h1>
-            <p className="text-xs text-brand-muted mt-1">
-              Keep an eye on job health, uptime, and recent checks.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-brand-muted group-focus-within:text-brand-primary transition-colors" />
-              <input
-                type="text"
-                placeholder="Find monitor..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-bg-subtle border border-border-card rounded-xl pl-9 pr-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-brand-primary/50 transition-all w-56 md:w-64 placeholder:text-text-muted"
-              />
-            </div>
-            <button
-              onClick={() => {
-                setEditingMonitor(null);
-                setIsModalOpen(true);
-              }}
+    <>
+      <AppHeader
+        title="Monitor Management"
+        description="Keep an eye on job health, uptime, and recent checks."
+        actions={
+          <>
+            <SearchInput
+              placeholder="Find monitor..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-56 md:w-64"
+            />
+            <Link
+              href="/monitors/new?type=cron"
               className="flex items-center gap-2 px-4 md:px-6 h-11 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-brand-primary/20 active:scale-[0.98]"
             >
               <Plus className="w-4 h-4" />
               <span>New Monitor</span>
-            </button>
-          </div>
-        </header>
+            </Link>
+          </>
+        }
+      />
 
-        <motion.div 
+      <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
@@ -294,28 +283,23 @@ export default function MonitorsPage() {
                   onEdit={handleEdit}
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center py-20 bg-bg-surface border border-border-card rounded-3xl">
-                  <Radar className="w-10 h-10 text-brand-muted opacity-20 mb-4" />
-                  <h3 className="text-text-primary font-bold mb-1">
-                    No monitors found
-                  </h3>
-                  <p className="text-brand-muted text-xs">
-                    Try adjusting your filters or search query
-                  </p>
-                </div>
+                <EmptyState
+                  icon={Radar}
+                  title="No monitors found"
+                  description="Try adjusting your filters or search query."
+                />
               )}
             </div>
           </div>
         </motion.div>
 
-        <MonitorModal
+        <EditMonitorModal
           isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false);
             setEditingMonitor(null);
           }}
-          editingMonitor={editingMonitor}
-          currentCount={monitors.length}
+          monitor={editingMonitor}
           onSuccess={fetchMonitors}
         />
 
@@ -331,8 +315,7 @@ export default function MonitorsPage() {
           message="Are you sure you want to delete this monitor? All history will be permanently removed."
           confirmText="Delete"
         />
-      </main>
-    </div>
+    </>
   );
 }
 
@@ -363,39 +346,5 @@ function FilterButton({
         ({count})
       </span>
     </button>
-  );
-}
-
-function StatCard({ label, value, icon: Icon, color, pulse = false }: any) {
-  return (
-    <div className="bg-bg-surface p-5 rounded-2xl border border-border-card relative overflow-hidden group transition-all hover:border-border-card/80">
-      <div className="flex justify-between items-start relative z-10">
-        <div>
-          <p className="text-[11px] font-bold text-brand-muted uppercase tracking-widest mb-1">
-            {label}
-          </p>
-          <div className="flex items-center gap-2">
-            <h3
-              className={cn(
-                "text-3xl font-bold tracking-tight",
-                color,
-                pulse && "animate-pulse",
-              )}
-            >
-              {value}
-            </h3>
-          </div>
-        </div>
-        <div className={cn("p-2.5 rounded-xl bg-bg-subtle", color)}>
-          <Icon className="w-5 h-5 opacity-80" />
-        </div>
-      </div>
-      <div
-        className={cn(
-          "absolute -bottom-10 -right-10 w-24 h-24 blur-[60px] opacity-10 rounded-full",
-          color.replace("text", "bg"),
-        )}
-      />
-    </div>
   );
 }

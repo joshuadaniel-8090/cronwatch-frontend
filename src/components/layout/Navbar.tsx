@@ -18,12 +18,12 @@ export const Navbar: React.FC = () => {
 
       <div className="flex items-center gap-4">
         {isLoading ? (
-          <div className="w-24 h-8 bg-bg-subtle animate-pulse rounded-md" />
+          <div className="w-24 h-8 bg-bg-subtle animate-pulse rounded-xl" />
         ) : isAuthenticated ? (
           <div className="flex items-center gap-4">
             <Link
               href="/dashboard"
-              className="px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-md text-sm font-medium transition-colors shadow-lg shadow-brand-primary/20"
+              className="px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl text-sm font-medium transition-colors shadow-lg shadow-brand-primary/20"
             >
               Dashboard
             </Link>
@@ -45,7 +45,7 @@ export const Navbar: React.FC = () => {
             </Link>
             <Link
               href="/register"
-              className="px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-md text-sm font-medium transition-colors shadow-lg shadow-brand-primary/20"
+              className="px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl text-sm font-medium transition-colors shadow-lg shadow-brand-primary/20"
             >
               Get Started
             </Link>

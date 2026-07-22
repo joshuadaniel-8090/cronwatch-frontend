@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -68,7 +70,7 @@ export const Sidebar: React.FC = () => {
             <div className="w-10 h-10 bg-brand-primary rounded-xl flex items-center justify-center shadow-lg shadow-brand-primary/20">
               <Radar className="w-6 h-6 text-white" />
             </div>
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-brand-primary rounded-full animate-pulse border-2 border-[#111111]" />
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-brand-primary rounded-full animate-pulse border-2 border-bg-header" />
           </div>
           <div
             className={cn(
@@ -76,7 +78,7 @@ export const Sidebar: React.FC = () => {
               isCollapsed && "md:opacity-0 md:w-0",
             )}
           >
-            <span className="text-xl font-bold text-white tracking-tight leading-none">
+            <span className="text-xl font-bold text-text-primary tracking-tight leading-none">
               Cronwatch
             </span>
           </div>
@@ -85,7 +87,8 @@ export const Sidebar: React.FC = () => {
         {/* Collapse Toggle - Only visible on desktop */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-8 w-6 h-6 bg-border-card border border-[#2F2F2F] rounded-full hidden md:flex items-center justify-center text-brand-muted hover:text-white transition-colors z-50"
+          className="absolute -right-3 top-8 w-6 h-6 bg-border-card border border-border-card rounded-full hidden md:flex items-center justify-center text-brand-muted hover:text-text-primary transition-colors z-50"
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {isCollapsed ? (
             <ChevronRight className="w-3.5 h-3.5" />
@@ -97,7 +100,8 @@ export const Sidebar: React.FC = () => {
         {/* Mobile Close Button */}
         <button
           onClick={() => setIsMobileMenuOpen(false)}
-          className="md:hidden ml-auto p-2 text-brand-muted hover:text-white"
+          className="md:hidden ml-auto p-2 text-brand-muted hover:text-text-primary"
+          aria-label="Close menu"
         >
           <X className="w-6 h-6" />
         </button>
@@ -120,7 +124,7 @@ export const Sidebar: React.FC = () => {
                 "group flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all relative overflow-hidden",
                 isActive
                   ? "text-brand-primary bg-brand-primary/10"
-                  : "text-brand-muted hover:text-white hover:bg-white/5",
+                  : "text-brand-muted hover:text-text-primary hover:bg-bg-subtle",
               )}
             >
               <Icon
@@ -128,7 +132,7 @@ export const Sidebar: React.FC = () => {
                   "w-5 h-5 shrink-0 transition-colors",
                   isActive
                     ? "text-brand-primary"
-                    : "text-brand-muted group-hover:text-white",
+                    : "text-brand-muted group-hover:text-text-primary",
                 )}
               />
               <span
@@ -163,7 +167,7 @@ export const Sidebar: React.FC = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
               className={cn(
-                "absolute bottom-full left-4 mb-2 bg-[#1A1A1A] border border-[#2F2F2F] rounded-xl shadow-2xl z-50 py-2 min-w-45",
+                "absolute bottom-full left-4 mb-2 bg-bg-elevated border border-border-card rounded-xl shadow-2xl z-50 py-2 min-w-45",
                 isCollapsed ? "w-10 left-1 right-1" : "right-4",
               )}
             >
@@ -173,12 +177,12 @@ export const Sidebar: React.FC = () => {
                   setIsUserMenuOpen(false);
                   setIsMobileMenuOpen(false);
                 }}
-                className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-brand-muted hover:text-white hover:bg-white/5 transition-all w-full text-left"
+                className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-brand-muted hover:text-text-primary hover:bg-bg-subtle transition-all w-full text-left"
               >
                 <Settings className="w-4 h-4 shrink-0" />
                 {!isCollapsed && <span>Settings</span>}
               </Link>
-              <div className="h-px bg-[#2F2F2F] my-1" />
+              <div className="h-px bg-border-card my-1" />
               <button
                 onClick={() => {
                   logout();
@@ -205,10 +209,13 @@ export const Sidebar: React.FC = () => {
         <button
           onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
           className={cn(
-            "w-full flex items-center gap-3 p-2 rounded-xl bg-white/3 overflow-hidden transition-all border border-transparent hover:bg-white/5 hover:border-white/10 active:scale-[0.98]",
+            "w-full flex items-center gap-3 p-2 rounded-xl bg-bg-subtle/60 overflow-hidden transition-all border border-transparent hover:bg-bg-subtle hover:border-border-card active:scale-[0.98]",
             isCollapsed ? "md:justify-center md:px-0" : "",
-            isUserMenuOpen ? "bg-white/5 border-white/10" : "",
+            isUserMenuOpen ? "bg-bg-subtle border-border-card" : "",
           )}
+          aria-label="User menu"
+          aria-haspopup="true"
+          aria-expanded={isUserMenuOpen}
         >
           {isLoading && !user ? (
             <>
@@ -225,7 +232,7 @@ export const Sidebar: React.FC = () => {
             </>
           ) : (
             <>
-              <div className="w-9 h-9 rounded-xl bg-linear-to-br from-brand-primary to-[#9333EA] flex items-center justify-center shrink-0 shadow-lg shadow-brand-primary/10 border border-white/10">
+              <div className="w-9 h-9 rounded-xl bg-linear-to-br from-brand-primary to-brand-primary/60 flex items-center justify-center shrink-0 shadow-lg shadow-brand-primary/10 border border-white/10">
                 <span className="text-xs font-bold text-white tracking-wider">
                   {getInitials(user)}
                 </span>
@@ -243,7 +250,7 @@ export const Sidebar: React.FC = () => {
                         "px-1.5 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-widest border transition-all",
                         user.plan === "pro"
                           ? "bg-brand-primary/10 text-brand-primary border-brand-primary/20 shadow-[0_0_10px_rgba(124,58,237,0.1)]"
-                          : "bg-white/5 text-brand-muted border-white/10 opacity-60",
+                          : "bg-bg-subtle text-brand-muted border-border-card opacity-60",
                       )}
                     >
                       {user.plan}
@@ -251,7 +258,7 @@ export const Sidebar: React.FC = () => {
                   </div>
                 )}
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold text-white truncate">
+                  <span className="text-[11px] font-bold text-text-primary truncate">
                     {user?.name || user?.email?.split("@")[0]}
                   </span>
                 </div>
@@ -269,16 +276,17 @@ export const Sidebar: React.FC = () => {
   return (
     <>
       {/* Mobile Top Bar */}
-      <div className="md:hidden h-16 border-b border-border-card bg-[#111111]/80 backdrop-blur-md fixed top-0 left-0 right-0 z-60 flex items-center justify-between px-6">
+      <div className="md:hidden h-16 border-b border-border-card bg-bg-header/80 backdrop-blur-md fixed top-0 left-0 right-0 z-60 flex items-center justify-between px-6">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-brand-primary rounded-lg flex items-center justify-center">
             <Radar className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-white">Cronwatch</span>
+          <span className="font-bold text-text-primary">Cronwatch</span>
         </div>
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="p-2 text-brand-muted hover:text-white"
+          className="p-2 text-brand-muted hover:text-text-primary"
+          aria-label="Open menu"
         >
           <Menu className="w-6 h-6" />
         </button>
@@ -300,7 +308,7 @@ export const Sidebar: React.FC = () => {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 left-0 w-70 bg-[#111111] border-r border-border-card z-80 md:hidden flex flex-col"
+              className="fixed inset-y-0 left-0 w-70 bg-bg-header border-r border-border-card z-80 md:hidden flex flex-col"
             >
               {navContent}
             </motion.div>
@@ -311,7 +319,7 @@ export const Sidebar: React.FC = () => {
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          "h-screen sticky top-0 bg-[#111111] border-r border-border-card hidden md:flex flex-col transition-all duration-300 z-50 shrink-0 overflow-hidden",
+          "h-screen sticky top-0 bg-bg-header border-r border-border-card hidden md:flex flex-col transition-all duration-300 z-50 shrink-0 overflow-hidden",
           isCollapsed ? "w-20" : "w-60",
         )}
       >
